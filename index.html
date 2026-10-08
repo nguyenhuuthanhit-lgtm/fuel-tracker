@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Phương Tiện & Bảo Dưỡng Xe</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- TOP NAVBAR -->
+    <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-600 p-2 rounded-lg">
+                        <i class="fa-solid fa-car-side text-xl text-white"></i>
+                    </div>
+                    <span class="font-bold text-lg tracking-wide">AutoTracker <span class="text-xs bg-indigo-500 text-white px-2 py-0.5 rounded-full font-normal">Supabase Auth</span></span>
+                </div>
+
+                <!-- User Account Info & Config -->
+                <div id="authNavSection" class="flex items-center space-x-3">
+                    <!-- Config Trigger Button -->
+                    <button id="btnOpenConfig" class="text-slate-400 hover:text-white px-3 py-1.5 rounded-md text-xs font-medium bg-slate-800 border border-slate-700 transition flex items-center" title="Cấu hình kết nối Supabase">
+                        <i class="fa-solid fa-gear mr-1.5"></i> Key Supabase
+                    </button>
+
+                    <!-- User status (Shown when logged in) -->
+                    <div id="userProfileBadge" class="hidden flex items-center space-x-3">
+                        <span class="text-xs sm:text-sm font-medium text-slate-300 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+                            <i class="fa-regular fa-user text-indigo-400 mr-1.5"></i> <span id="userEmailText">loading...</span>
+                        </span>
+                        <button id="btnSignOut" class="bg-red-600/80 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium flex items-center">
+                            <i class="fa-solid fa-arrow-right-from-bracket mr-1.5"></i> Đăng xuất
+                        </button>
+                    </div>
+
+                    <!-- Login trigger (Shown when logged out) -->
+                    <button id="btnOpenAuthModal" class="hidden bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm px-4 py-2 rounded-lg transition font-semibold shadow">
+                        <i class="fa-solid fa-right-to-bracket mr-1.5"></i> Đăng Nhập / Đăng Ký
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- VEHICLE SELECTOR BANNER -->
+        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <i class="fa-solid fa-gauge-high text-2xl"></i>
+                </div>
+                <div>
+                    <label for="vehicleSelect" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Phương tiện đang chọn</label>
+                    <select id="vehicleSelect" class="bg-slate-50 border border-slate-300 font-bold text-slate-800 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none min-w-[220px]">
+                        <option value="">-- Chưa chọn xe --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button id="btnNewVehicle" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center justify-center space-x-2 shadow-sm">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Thêm Phương Tiện</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- DASHBOARD STATS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase">Tổng Odometer</p>
+                    <h3 id="statOdo" class="text-2xl font-bold text-slate-800 mt-1">0 <span class="text-sm font-normal text-slate-500">km</span></h3>
+                </div>
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                    <i class="fa-solid fa-road text-xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase">Mức tiêu thụ TB</p>
+                    <h3 id="statAvgCons" class="text-2xl font-bold text-emerald-600 mt-1">0.0 <span class="text-sm font-normal text-slate-500">L/100km</span></h3>
+                </div>
+                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <i class="fa-solid fa-leaf text-xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase">Chi phí Xăng dầu</p>
+                    <h3 id="statFuelCost" class="text-2xl font-bold text-amber-600 mt-1">0 <span class="text-sm font-normal text-slate-500">đ</span></h3>
+                </div>
+                <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                    <i class="fa-solid fa-gas-pump text-xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase">Chi phí Bảo dưỡng</p>
+                    <h3 id="statMaintCost" class="text-2xl font-bold text-purple-600 mt-1">0 <span class="text-sm font-normal text-slate-500">đ</span></h3>
+                </div>
+                <div class="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                    <i class="fa-solid fa-wrench text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABS NAV -->
+        <div class="border-b border-slate-200 bg-white rounded-xl shadow-sm px-4 pt-2">
+            <nav class="flex space-x-8" aria-label="Tabs">
+                <button id="tabFuelBtn" onclick="switchTab('fuel')" class="border-indigo-600 text-indigo-600 whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-gas-pump"></i>
+                    <span>Nhật Ký Đổ Xăng</span>
+                </button>
+                <button id="tabMaintBtn" onclick="switchTab('maint')" class="border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    <span>Bảo Dưỡng & Sửa Chữa</span>
+                </button>
+                <button id="tabChartBtn" onclick="switchTab('charts')" class="border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Thống Kê & Biểu Đồ</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- TAB CONTENT 1: FUEL LOGS -->
+        <div id="tabFuel" class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-800">Lịch sử Đổ Xăng</h2>
+                <button id="btnNewFuel" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Thêm Lần Đổ Xăng</span>
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-xs">
+                            <tr>
+                                <th class="p-4">Ngày</th>
+                                <th class="p-4">Số KM (Odo)</th>
+                                <th class="p-4">Đơn giá (đ/L)</th>
+                                <th class="p-4">Tổng tiền (VNĐ)</th>
+                                <th class="p-4">Số Lít (tính)</th>
+                                <th class="p-4">Mức tiêu thụ</th>
+                                <th class="p-4 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fuelLogTable" class="divide-y divide-slate-100 text-slate-700">
+                            <tr>
+                                <td colspan="7" class="text-center py-8 text-slate-400">Vui lòng đăng nhập để xem dữ liệu...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT 2: MAINTENANCE LOGS -->
+        <div id="tabMaint" class="space-y-4 hidden">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-800">Lịch sử Bảo Dưỡng</h2>
+                <button id="btnNewMaint" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Thêm Bảo Dưỡng</span>
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-xs">
+                            <tr>
+                                <th class="p-4">Ngày</th>
+                                <th class="p-4">Số KM (Odo)</th>
+                                <th class="p-4">Chi tiết dịch vụ</th>
+                                <th class="p-4">Tiền dịch vụ</th>
+                                <th class="p-4">Thuế (VAT)</th>
+                                <th class="p-4">Tổng thanh toán</th>
+                                <th class="p-4 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="maintLogTable" class="divide-y divide-slate-100 text-slate-700">
+                            <tr>
+                                <td colspan="7" class="text-center py-8 text-slate-400">Vui lòng đăng nhập để xem dữ liệu...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT 3: CHARTS -->
+        <div id="tabCharts" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-800 mb-4 flex items-center space-x-2">
+                    <i class="fa-solid fa-chart-line text-emerald-600"></i>
+                    <span>Xu hướng Tiêu thụ Xăng (L/100km)</span>
+                </h3>
+                <div class="relative h-64">
+                    <canvas id="consumptionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-800 mb-4 flex items-center space-x-2">
+                    <i class="fa-solid fa-chart-pie text-indigo-600"></i>
+                    <span>Cơ cấu Chi phí (Xăng vs Bảo dưỡng)</span>
+                </h3>
+                <div class="relative h-64 flex justify-center">
+                    <canvas id="costPieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL 1: AUTHENTICATION -->
+    <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100">
+            <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
+                <div>
+                    <h3 id="authModalTitle" class="font-bold text-xl">Đăng Nhập Tài Khoản</h3>
+                    <p class="text-xs text-slate-400 mt-1">Kết nối trực tiếp Supabase Authentication</p>
+                </div>
+                <button class="text-slate-400 hover:text-white" onclick="closeModal('authModal')"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <form id="authForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
+                    <input type="email" id="authEmail" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="nguyenvana@gmail.com">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Mật khẩu</label>
+                    <input type="password" id="authPassword" required minlength="6" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="••••••••">
+                </div>
+
+                <div id="authError" class="hidden text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200"></div>
+
+                <div class="pt-2 space-y-2">
+                    <button type="submit" id="btnSubmitAuth" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg text-sm transition shadow-sm">
+                        Đăng Nhập
+                    </button>
+                    <button type="button" id="btnToggleAuthMode" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2.5 rounded-lg text-sm transition">
+                        Chưa có tài khoản? Đăng ký ngay
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: NEW VEHICLE -->
+    <div id="vehicleModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div class="p-5 bg-indigo-600 text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg">Thêm Phương Tiện Mới</h3>
+                <button class="text-indigo-200 hover:text-white" onclick="closeModal('vehicleModal')"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="vehicleForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tên xe / Nhãn hiệu</label>
+                    <input type="text" id="vName" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500" placeholder="VD: Honda CR-V 2022">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Biển số xe</label>
+                    <input type="text" id="vPlate" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500" placeholder="VD: 30H-123.45">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Loại xe</label>
+                    <select id="vType" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                        <option value="Ô tô">Ô tô</option>
+                        <option value="Xe máy">Xe máy</option>
+                        <option value="Tải / Khác">Tải / Khác</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Odometer ban đầu (km)</label>
+                    <input type="number" id="vOdo" required min="0" value="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg text-sm shadow">
+                    Lưu Phương Tiện
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: FUEL LOG -->
+    <div id="fuelModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div class="p-5 bg-emerald-600 text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg">Thêm Nhật Ký Đổ Xăng</h3>
+                <button class="text-emerald-200 hover:text-white" onclick="closeModal('fuelModal')"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="fuelForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Ngày đổ xăng</label>
+                    <input type="date" id="fDate" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Số KM trên đồng hồ (Odometer)</label>
+                    <input type="number" id="fOdo" required min="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emera
