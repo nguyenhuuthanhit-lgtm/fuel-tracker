@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoTracker - L/100km & Bảo Dưỡng</title>
+    <title>AutoTracker - Quản Lý Nhiên Liệu & Bảo Dưỡng</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -18,34 +18,66 @@
                 <i data-lucide="gauge" class="w-7 h-7 text-emerald-400"></i>
                 <span class="font-bold text-xl bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">AutoTracker</span>
             </div>
-            <div class="flex items-center gap-2" id="nav-actions">
-                <button onclick="openModal('modal-auth')" class="bg-emerald-600 hover:bg-emerald-500 px-3.5 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
-                    <i data-lucide="user" class="w-4 h-4"></i>
-                    <span id="auth-btn-text">Đăng nhập / Đăng ký</span>
-                </button>
-                <button onclick="openModal('modal-config')" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-lg text-amber-400 transition" title="Cấu hình Key Supabase">
-                    <i data-lucide="key" class="w-4 h-4"></i>
-                </button>
+            <div id="user-info-bar" class="hidden flex items-center gap-3">
+                <span id="user-email-display" class="text-xs bg-slate-700 text-emerald-300 px-3 py-1.5 rounded-full font-medium"></span>
+                <button onclick="handleSignOut()" class="bg-red-600/80 hover:bg-red-600 px-3 py-1.5 rounded-lg text-xs font-medium transition">Đăng xuất</button>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <!-- Form Đăng Nhập / Kết Nối (Hiển thị khi chưa đăng nhập) -->
+    <div id="auth-screen" class="max-w-md mx-auto my-12 p-6 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl space-y-6">
+        <div class="text-center space-y-2">
+            <h2 class="text-2xl font-bold text-emerald-400">Đăng Nhập Hệ Thống</h2>
+            <p class="text-xs text-slate-400">Nhập cấu hình Supabase và tài khoản của bạn để kết nối dữ liệu online</p>
+        </div>
 
-        <!-- Vehicle Selection Bar -->
+        <!-- Cấu hình Supabase Key -->
+        <div class="space-y-3 bg-slate-900/60 p-4 rounded-lg border border-slate-700/80">
+            <span class="text-xs font-bold text-amber-400 block uppercase tracking-wider">1. Cấu hình Supabase</span>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Project URL</label>
+                <input type="url" id="cfg-url" placeholder="https://xxxx.supabase.co" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Anon / Public Key</label>
+                <input type="text" id="cfg-key" placeholder="eyJhbGciOi..." class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400">
+            </div>
+        </div>
+
+        <!-- Form Auth Supabase -->
+        <div class="space-y-3 bg-slate-900/60 p-4 rounded-lg border border-slate-700/80">
+            <span class="text-xs font-bold text-emerald-400 block uppercase tracking-wider">2. Tài khoản Supabase Auth</span>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Email</label>
+                <input type="email" id="auth-email" placeholder="email@vi-du.com" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Mật khẩu</label>
+                <input type="password" id="auth-pass" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="handleSignIn()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-2 rounded text-sm font-bold transition">Đăng Nhập</button>
+                <button onclick="handleSignUp()" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded text-sm font-medium transition">Tạo Tài Khoản</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard (Chỉ hiện khi đã đăng nhập) -->
+    <main id="app-dashboard" class="hidden max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+        <!-- Vehicle Bar -->
         <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3">
                 <i data-lucide="car" class="w-6 h-6 text-emerald-400"></i>
                 <div>
-                    <label class="text-xs text-slate-400 block font-medium">Chọn phương tiện</label>
+                    <label class="text-xs text-slate-400 block font-medium">Phương tiện hiện tại</label>
                     <select id="vehicle-select" onchange="switchVehicle(this.value)" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-sm font-semibold text-emerald-400 focus:outline-none">
-                        <option value="">-- Chưa có xe nào --</option>
                     </select>
                 </div>
             </div>
             <button onclick="openModal('modal-vehicle')" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i> Thêm xe
+                <i data-lucide="plus-circle" class="w-4 h-4"></i> Thêm xe mới
             </button>
         </div>
 
@@ -57,7 +89,7 @@
                     <i data-lucide="fuel" class="w-5 h-5 text-emerald-400"></i>
                 </div>
                 <div class="text-3xl font-bold text-emerald-400" id="stat-avg-consumption">0.0 <span class="text-sm font-normal text-slate-400">L/100km</span></div>
-                <p class="text-xs text-slate-400 mt-2">Trung bình các lần đổ xăng</p>
+                <p class="text-xs text-slate-400 mt-2">Tính từ dữ liệu đổ xăng</p>
             </div>
 
             <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
@@ -74,4 +106,12 @@
                     <span class="text-sm font-medium">Tổng tiền bảo dưỡng</span>
                     <i data-lucide="wrench" class="w-5 h-5 text-amber-400"></i>
                 </div>
-                <div class="text-3xl font-bold text-amber-400" id="stat-total-maint-cost">0 <span class="text-sm font-normal text-slate-400">
+                <div class="text-3xl font-bold text-amber-400" id="stat-total-maint-cost">0 <span class="text-sm font-normal text-slate-400">VNĐ</span></div>
+                <p class="text-xs text-slate-400 mt-2" id="stat-maint-count">0 Lần bảo dưỡng</p>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                <h3 class="font-bold mb-4 text-
