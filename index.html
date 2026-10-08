@@ -3,914 +3,253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Phương Tiện & Bảo Dưỡng Xe</title>
+    <title>AutoTracker - Nhiên Liệu & Bảo Dưỡng</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-        }
-    </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
-    <!-- TOP NAVBAR -->
-    <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Brand -->
-                <div class="flex items-center space-x-3">
-                    <div class="bg-indigo-600 p-2 rounded-lg">
-                        <i class="fa-solid fa-car-side text-xl text-white"></i>
-                    </div>
-                    <span class="font-bold text-lg tracking-wide">AutoTracker <span class="text-xs bg-indigo-500 text-white px-2 py-0.5 rounded-full font-normal">Supabase Auth</span></span>
-                </div>
-
-                <!-- User Account Info & Config -->
-                <div id="authNavSection" class="flex items-center space-x-3">
-                    <!-- Config Trigger Button -->
-                    <button id="btnOpenConfig" class="text-slate-400 hover:text-white px-3 py-1.5 rounded-md text-xs font-medium bg-slate-800 border border-slate-700 transition flex items-center" title="Cấu hình kết nối Supabase">
-                        <i class="fa-solid fa-gear mr-1.5"></i> Key Supabase
-                    </button>
-
-                    <!-- Online/Offline Status Badge -->
-                    <span id="guestBadge" class="text-xs bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full font-medium flex items-center">
-                        <i id="statusIcon" class="fa-solid fa-circle text-amber-400 text-[10px] mr-1.5"></i> <span id="statusText">Chế độ Offline (Chưa nhập Key)</span>
-                    </span>
-
-                    <!-- User status (Shown when logged in) -->
-                    <div id="userProfileBadge" class="hidden flex items-center space-x-3">
-                        <span class="text-xs sm:text-sm font-medium text-slate-300 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
-                            <i class="fa-regular fa-user text-indigo-400 mr-1.5"></i> <span id="userEmailText">loading...</span>
-                        </span>
-                        <button id="btnSignOut" class="bg-red-600/80 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium flex items-center">
-                            <i class="fa-solid fa-arrow-right-from-bracket mr-1.5"></i> Đăng xuất
-                        </button>
-                    </div>
-
-                    <!-- Login trigger (Shown when logged out) -->
-                    <button id="btnOpenAuthModal" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm px-3.5 py-1.5 rounded-lg transition font-semibold shadow">
-                        <i class="fa-solid fa-right-to-bracket mr-1.5"></i> Tài khoản Cloud
-                    </button>
-                </div>
+    <!-- Header Navigation -->
+    <nav class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i data-lucide="fuel" class="w-7 h-7 text-emerald-400"></i>
+                <span class="font-bold text-xl tracking-wide bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">AutoTracker</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="sync-status" class="text-xs px-2.5 py-1 rounded-full bg-slate-700 text-slate-300 font-medium">⚪ Ngoại tuyến (Local)</span>
+                <button onclick="openConfigModal()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 transition">
+                    <i data-lucide="key" class="w-4 h-4 text-amber-400"></i>
+                    <span>Key Supabase</span>
+                </button>
             </div>
         </div>
     </nav>
 
-    <!-- MAIN APP CONTAINER -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
-        <!-- VEHICLE SELECTOR BANNER -->
-        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="flex items-center space-x-4">
-                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
-                    <i class="fa-solid fa-gauge-high text-2xl"></i>
-                </div>
+        <!-- Vehicle Selection Header -->
+        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex flex-wrap items-center justify-between gap-4 shadow-lg">
+            <div class="flex items-center gap-3">
+                <i data-lucide="car" class="w-6 h-6 text-emerald-400"></i>
                 <div>
-                    <label for="vehicleSelect" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Phương tiện đang chọn</label>
-                    <select id="vehicleSelect" class="bg-slate-50 border border-slate-300 font-bold text-slate-800 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none min-w-[220px]">
-                        <option value="">-- Chưa chọn xe --</option>
+                    <label class="text-xs text-slate-400 block font-medium">Xe đang chọn</label>
+                    <select id="vehicle-select" onchange="switchVehicle(this.value)" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 font-semibold text-emerald-400 focus:outline-none focus:border-emerald-500">
+                        <!-- Options generated dynamically -->
                     </select>
                 </div>
             </div>
+            <button onclick="openAddVehicleModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2 transition text-sm">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <span>Thêm xe mới</span>
+            </button>
+        </div>
 
-            <div class="flex items-center space-x-3">
-                <button id="btnNewVehicle" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center justify-center space-x-2 shadow-sm">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Thêm Phương Tiện</span>
-                </button>
+        <!-- Dashboard Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow">
+                <div class="flex justify-between items-start text-slate-400 mb-2">
+                    <span class="text-sm font-medium">Định mức L/100km</span>
+                    <i data-lucide="gauge" class="w-5 h-5 text-emerald-400"></i>
+                </div>
+                <div class="text-3xl font-bold text-emerald-400" id="stat-avg-consumption">0.0 <span class="text-sm font-normal text-slate-400">L/100km</span></div>
+                <p class="text-xs text-slate-400 mt-2" id="stat-consumption-sub">Trung bình các lần đổ</p>
+            </div>
+
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow">
+                <div class="flex justify-between items-start text-slate-400 mb-2">
+                    <span class="text-sm font-medium">Tổng tiền nhiên liệu</span>
+                    <i data-lucide="droplet" class="w-5 h-5 text-cyan-400"></i>
+                </div>
+                <div class="text-3xl font-bold text-cyan-400" id="stat-total-fuel-cost">0 <span class="text-sm font-normal text-slate-400">VNĐ</span></div>
+                <p class="text-xs text-slate-400 mt-2" id="stat-total-liters">0 Lít nhiên liệu</p>
+            </div>
+
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow">
+                <div class="flex justify-between items-start text-slate-400 mb-2">
+                    <span class="text-sm font-medium">Chi phí bảo dưỡng</span>
+                    <i data-lucide="wrench" class="w-5 h-5 text-amber-400"></i>
+                </div>
+                <div class="text-3xl font-bold text-amber-400" id="stat-total-maint-cost">0 <span class="text-sm font-normal text-slate-400">VNĐ</span></div>
+                <p class="text-xs text-slate-400 mt-2" id="stat-maint-count">0 Lần bảo dưỡng</p>
             </div>
         </div>
 
-        <!-- DASHBOARD STATS -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-slate-500 uppercase">Tổng Odometer</p>
-                    <h3 id="statOdo" class="text-2xl font-bold text-slate-800 mt-1">0 <span class="text-sm font-normal text-slate-500">km</span></h3>
-                </div>
-                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                    <i class="fa-solid fa-road text-xl"></i>
-                </div>
-            </div>
-
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-slate-500 uppercase">Mức tiêu thụ TB</p>
-                    <h3 id="statAvgCons" class="text-2xl font-bold text-emerald-600 mt-1">0.0 <span class="text-sm font-normal text-slate-500">L/100km</span></h3>
-                </div>
-                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-                    <i class="fa-solid fa-leaf text-xl"></i>
-                </div>
-            </div>
-
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-slate-500 uppercase">Chi phí Xăng dầu</p>
-                    <h3 id="statFuelCost" class="text-2xl font-bold text-amber-600 mt-1">0 <span class="text-sm font-normal text-slate-500">đ</span></h3>
-                </div>
-                <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
-                    <i class="fa-solid fa-gas-pump text-xl"></i>
-                </div>
-            </div>
-
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-slate-500 uppercase">Chi phí Bảo dưỡng</p>
-                    <h3 id="statMaintCost" class="text-2xl font-bold text-purple-600 mt-1">0 <span class="text-sm font-normal text-slate-500">đ</span></h3>
-                </div>
-                <div class="p-3 bg-purple-50 text-purple-600 rounded-xl">
-                    <i class="fa-solid fa-wrench text-xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- TABS NAV -->
-        <div class="border-b border-slate-200 bg-white rounded-xl shadow-sm px-4 pt-2">
-            <nav class="flex space-x-8" aria-label="Tabs">
-                <button id="tabFuelBtn" onclick="switchTab('fuel')" class="border-indigo-600 text-indigo-600 whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2">
-                    <i class="fa-solid fa-gas-pump"></i>
-                    <span>Nhật Ký Đổ Xăng</span>
-                </button>
-                <button id="tabMaintBtn" onclick="switchTab('maint')" class="border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2">
-                    <i class="fa-solid fa-screwdriver-wrench"></i>
-                    <span>Bảo Dưỡng & Sửa Chữa</span>
-                </button>
-                <button id="tabChartBtn" onclick="switchTab('charts')" class="border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>Thống Kê & Biểu Đồ</span>
-                </button>
-            </nav>
-        </div>
-
-        <!-- TAB CONTENT 1: FUEL LOGS -->
-        <div id="tabFuel" class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-800">Lịch sử Đổ Xăng</h2>
-                <button id="btnNewFuel" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm flex items-center space-x-2">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Thêm Lần Đổ Xăng</span>
-                </button>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-xs">
-                            <tr>
-                                <th class="p-4">Ngày</th>
-                                <th class="p-4">Số KM (Odo)</th>
-                                <th class="p-4">Đơn giá (đ/L)</th>
-                                <th class="p-4">Tổng tiền (VNĐ)</th>
-                                <th class="p-4">Số Lít (tính)</th>
-                                <th class="p-4">Mức tiêu thụ</th>
-                                <th class="p-4 text-right">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody id="fuelLogTable" class="divide-y divide-slate-100 text-slate-700">
-                            <tr>
-                                <td colspan="7" class="text-center py-8 text-slate-400">Vui lòng đăng nhập để xem dữ liệu...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB CONTENT 2: MAINTENANCE LOGS -->
-        <div id="tabMaint" class="space-y-4 hidden">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-800">Lịch sử Bảo Dưỡng</h2>
-                <button id="btnNewMaint" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm flex items-center space-x-2">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Thêm Bảo Dưỡng</span>
-                </button>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-xs">
-                            <tr>
-                                <th class="p-4">Ngày</th>
-                                <th class="p-4">Số KM (Odo)</th>
-                                <th class="p-4">Chi tiết dịch vụ</th>
-                                <th class="p-4">Tiền dịch vụ</th>
-                                <th class="p-4">Thuế (VAT)</th>
-                                <th class="p-4">Tổng thanh toán</th>
-                                <th class="p-4 text-right">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody id="maintLogTable" class="divide-y divide-slate-100 text-slate-700">
-                            <tr>
-                                <td colspan="7" class="text-center py-8 text-slate-400">Vui lòng đăng nhập để xem dữ liệu...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB CONTENT 3: CHARTS -->
-        <div id="tabCharts" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-slate-800 mb-4 flex items-center space-x-2">
-                    <i class="fa-solid fa-chart-line text-emerald-600"></i>
-                    <span>Xu hướng Tiêu thụ Xăng (L/100km)</span>
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow">
+                <h3 class="font-bold text-slate-200 mb-4 flex items-center gap-2">
+                    <i data-lucide="trending-up" class="w-5 h-5 text-emerald-400"></i>
+                    Biểu đồ Mức tiêu thụ (L/100km)
                 </h3>
-                <div class="relative h-64">
+                <div class="h-64">
                     <canvas id="consumptionChart"></canvas>
                 </div>
             </div>
 
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-slate-800 mb-4 flex items-center space-x-2">
-                    <i class="fa-solid fa-chart-pie text-indigo-600"></i>
-                    <span>Cơ cấu Chi phí (Xăng vs Bảo dưỡng)</span>
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow">
+                <h3 class="font-bold text-slate-200 mb-4 flex items-center gap-2">
+                    <i data-lucide="pie-chart" class="w-5 h-5 text-cyan-400"></i>
+                    Phân bổ chi phí (Xăng vs Bảo dưỡng)
                 </h3>
-                <div class="relative h-64 flex justify-center">
+                <div class="h-64 flex justify-center">
                     <canvas id="costPieChart"></canvas>
                 </div>
             </div>
         </div>
 
+        <!-- Section 1: Fuel Logs -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5 shadow">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                    <i data-lucide="fuel" class="w-5 h-5 text-emerald-400"></i>
+                    Nhật ký Đổ Nhiên Liệu
+                </h2>
+                <button onclick="openFuelModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Nhập Xăng
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-900/60 text-slate-400 uppercase text-xs font-semibold">
+                        <tr>
+                            <th class="p-3">Ngày</th>
+                            <th class="p-3">Số Km</th>
+                            <th class="p-3">Số Tiền (VNĐ)</th>
+                            <th class="p-3">Đơn Giá (/L)</th>
+                            <th class="p-3">Số Lít</th>
+                            <th class="p-3 text-emerald-400">L/100km</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fuel-table-body" class="divide-y divide-slate-700/50">
+                        <!-- Fuel rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 2: Maintenance Logs -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5 shadow">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                    <i data-lucide="wrench" class="w-5 h-5 text-amber-400"></i>
+                    Nhật ký Bảo Dưỡng
+                </h2>
+                <button onclick="openMaintModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Thêm Bảo Dưỡng
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-900/60 text-slate-400 uppercase text-xs font-semibold">
+                        <tr>
+                            <th class="p-3">Ngày</th>
+                            <th class="p-3">Số Km</th>
+                            <th class="p-3">Chi Tiết Bảo Dưỡng</th>
+                            <th class="p-3">Chi Phí</th>
+                            <th class="p-3">Thuế (%)</th>
+                            <th class="p-3 text-amber-400">Tổng Tiền (+VAT)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="maint-table-body" class="divide-y divide-slate-700/50">
+                        <!-- Maintenance rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </main>
 
-    <!-- MODAL 1: AUTHENTICATION -->
-    <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100">
-            <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
+    <!-- Modal 1: Add Vehicle -->
+    <div id="modal-vehicle" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-slate-100 mb-4">Thêm Phương Tiện Mới</h3>
+            <form id="form-vehicle" onsubmit="handleSaveVehicle(event)" class="space-y-4">
                 <div>
-                    <h3 id="authModalTitle" class="font-bold text-xl">Đăng Nhập Tài Khoản</h3>
-                    <p class="text-xs text-slate-400 mt-1">Kết nối trực tiếp Supabase Authentication</p>
-                </div>
-                <button class="text-slate-400 hover:text-white" onclick="closeModal('authModal')"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-
-            <form id="authForm" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
-                    <input type="email" id="authEmail" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="nguyenvana@gmail.com">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Mật khẩu</label>
-                    <input type="password" id="authPassword" required minlength="6" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="••••••••">
-                </div>
-
-                <div id="authError" class="hidden text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200"></div>
-
-                <div class="pt-2 space-y-2">
-                    <button type="submit" id="btnSubmitAuth" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg text-sm transition shadow-sm">
-                        Đăng Nhập
-                    </button>
-                    <button type="button" id="btnToggleAuthMode" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2.5 rounded-lg text-sm transition">
-                        Chưa có tài khoản? Đăng ký ngay
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL 2: NEW VEHICLE -->
-    <div id="vehicleModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div class="p-5 bg-indigo-600 text-white flex justify-between items-center">
-                <h3 class="font-bold text-lg">Thêm Phương Tiện Mới</h3>
-                <button class="text-indigo-200 hover:text-white" onclick="closeModal('vehicleModal')"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            <form id="vehicleForm" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tên xe / Nhãn hiệu</label>
-                    <input type="text" id="vName" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500" placeholder="VD: Honda CR-V 2022">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Biển số / Tên xe</label>
+                    <input type="text" id="v-name" required placeholder="VD: 79A-123.45 hoặc Honda SH" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Biển số xe</label>
-                    <input type="text" id="vPlate" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500" placeholder="VD: 30H-123.45">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Loại xe</label>
-                    <select id="vType" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Loại phương tiện</label>
+                    <select id="v-type" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm">
                         <option value="Ô tô">Ô tô</option>
                         <option value="Xe máy">Xe máy</option>
-                        <option value="Tải / Khác">Tải / Khác</option>
+                        <option value="Khác">Khác</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Odometer ban đầu (km)</label>
-                    <input type="number" id="vOdo" required min="0" value="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Số Odo ban đầu (Km)</label>
+                    <input type="number" id="v-odo" required min="0" placeholder="0" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-500">
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg text-sm shadow">
-                    Lưu Phương Tiện
-                </button>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-vehicle')" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm">Hủy</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium text-sm">Lưu Xe</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL 3: FUEL LOG -->
-    <div id="fuelModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div class="p-5 bg-emerald-600 text-white flex justify-between items-center">
-                <h3 class="font-bold text-lg">Thêm Nhật Ký Đổ Xăng</h3>
-                <button class="text-emerald-200 hover:text-white" onclick="closeModal('fuelModal')"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            <form id="fuelForm" class="p-6 space-y-4">
+    <!-- Modal 2: Add Fuel Log -->
+    <div id="modal-fuel" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-slate-100 mb-4">Nhập Nhật Ký Đổ Nhiên Liệu</h3>
+            <form id="form-fuel" onsubmit="handleSaveFuel(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Ngày đổ xăng</label>
-                    <input type="date" id="fDate" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Ngày đổ</label>
+                    <input type="date" id="f-date" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Số KM trên đồng hồ (Odometer)</label>
-                    <input type="number" id="fOdo" required min="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="VD: 15200">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Số Km hiện tại (Odo)</label>
+                    <input type="number" id="f-km" required min="0" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-500">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Giá xăng (đ/Lít)</label>
-                        <input type="number" id="fPricePerLiter" required min="1000" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="24500">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Số tiền (VNĐ)</label>
+                        <input type="number" id="f-cost" required min="1000" step="1000" placeholder="500000" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Tổng số tiền (VNĐ)</label>
-                        <input type="number" id="fTotalCost" required min="1000" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="500000">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Giá xăng/Lít (VNĐ)</label>
+                        <input type="number" id="f-price" required min="1000" step="100" placeholder="23000" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-500">
                     </div>
                 </div>
-                <div class="p-3 bg-emerald-50 rounded-lg text-emerald-800 text-xs font-medium flex justify-between items-center">
-                    <span>Số Lít dự tính:</span>
-                    <span id="fCalcLiters" class="font-bold text-sm">0.00 L</span>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-fuel')" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm">Hủy</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium text-sm">Lưu</button>
                 </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg text-sm shadow">
-                    Ghi Nhận Đổ Xăng
-                </button>
             </form>
         </div>
     </div>
 
-    <!-- MODAL 4: MAINTENANCE LOG -->
-    <div id="maintModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div class="p-5 bg-purple-600 text-white flex justify-between items-center">
-                <h3 class="font-bold text-lg">Thêm Nhật Ký Bảo Dưỡng</h3>
-                <button class="text-purple-200 hover:text-white" onclick="closeModal('maintModal')"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            <form id="maintForm" class="p-6 space-y-4">
+    <!-- Modal 3: Add Maintenance Log -->
+    <div id="modal-maint" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-slate-100 mb-4">Nhập Nhật Ký Bảo Dưỡng</h3>
+            <form id="form-maint" onsubmit="handleSaveMaint(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Ngày thực hiện</label>
-                    <input type="date" id="mDate" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Ngày bảo dưỡng</label>
+                    <input type="date" id="m-date" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-amber-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Số KM hiện tại (Odometer)</label>
-                    <input type="number" id="mOdo" required min="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500" placeholder="VD: 10000">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Số Km lúc bảo dưỡng</label>
+                    <input type="number" id="m-km" required min="0" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-amber-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Chi tiết dịch vụ / Thay phụ tùng</label>
-                    <textarea id="mDetails" required rows="2" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500" placeholder="VD: Thay nhớt máy, lọc gió, kiểm tra phanh..."></textarea>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Chi tiết bảo dưỡng</label>
+                    <textarea id="m-desc" required placeholder="Thay nhớt, lọc gió, bảo dưỡng định kỳ..." class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-amber-500" rows="2"></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Tiền dịch vụ/phụ tùng (đ)</label>
-                        <input type="number" id="mServiceCost" required min="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500" placeholder="350000">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Số tiền (VNĐ)</label>
+                        <input type="number" id="m-cost" required min="0" step="1000" placeholder="1000000" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-amber-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Thuế VAT (%)</label>
-                        <input type="number" id="mVatPercent" min="0" max="100" value="10" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500">
-                    </div>
-                </div>
-                <div class="p-3 bg-purple-50 rounded-lg text-purple-800 text-xs font-medium flex justify-between items-center">
-                    <span>Tổng thanh toán (+VAT):</span>
-                    <span id="mCalcTotal" class="font-bold text-sm">0 đ</span>
-                </div>
-                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 rounded-lg text-sm shadow">
-                    Ghi Nhận Bảo Dưỡng
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL 5: SUPABASE CONFIGURATION -->
-    <div id="configModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
-            <div class="p-5 bg-slate-800 text-white flex justify-between items-center">
-                <h3 class="font-bold text-lg"><i class="fa-solid fa-key mr-2 text-indigo-400"></i>Cấu Hình Supabase API</h3>
-                <button class="text-slate-400 hover:text-white" onclick="closeModal('configModal')"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            <form id="configForm" class="p-6 space-y-4">
-                <p class="text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                    Nhập thông tin kết nối Supabase của bạn (Lấy trong Supabase Project Settings -> API).
-                </p>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Supabase URL</label>
-                    <input type="text" id="cfgUrl" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500" placeholder="https://xyz.supabase.co">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Supabase Anon Key</label>
-                    <input type="text" id="cfgKey" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500" placeholder="eyJh...">
-                </div>
-                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-lg text-sm shadow">
-                    Lưu & Kết Nối Supabase
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        const STORAGE_KEY_URL = 'autotracker_supabase_url';
-        const STORAGE_KEY_ANON = 'autotracker_supabase_key';
-        const LOCAL_STORAGE_VEHICLES = 'autotracker_local_vehicles';
-        const LOCAL_STORAGE_FUEL = 'autotracker_local_fuel';
-        const LOCAL_STORAGE_MAINT = 'autotracker_local_maint';
-
-        let supabase = null;
-        let currentUser = null;
-        let isSignUpMode = false;
-
-        let vehicles = [];
-        let selectedVehicleId = null;
-        let fuelLogs = [];
-        let maintLogs = [];
-
-        let consumptionChartInstance = null;
-        let costPieChartInstance = null;
-
-        window.addEventListener('DOMContentLoaded', () => {
-            initSupabaseClient();
-            setupEventListeners();
-            document.getElementById('fDate').valueAsDate = new Date();
-            document.getElementById('mDate').valueAsDate = new Date();
-        });
-
-        async function initSupabaseClient() {
-            let url = localStorage.getItem(STORAGE_KEY_URL) || "";
-            let key = localStorage.getItem(STORAGE_KEY_ANON) || "";
-
-            document.getElementById('cfgUrl').value = url;
-            document.getElementById('cfgKey').value = key;
-
-            if (url && key && url.includes('supabase.co')) {
-                try {
-                    supabase = window.supabase.createClient(url, key);
-                    await checkAuthSession();
-                } catch (err) {
-                    console.error("Lỗi khởi tạo Supabase client:", err);
-                    updateAuthUI(null, false);
-                    await loadUserVehicles();
-                }
-            } else {
-                updateAuthUI(null, false);
-                await loadUserVehicles();
-            }
-        }
-
-        async function checkAuthSession() {
-            if (!supabase) {
-                await loadUserVehicles();
-                return;
-            }
-
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session && session.user) {
-                    currentUser = session.user;
-                    updateAuthUI(currentUser, true);
-                } else {
-                    // Thử đăng nhập ẩn danh trực tiếp để có user_id kết nối Online
-                    try {
-                        const { data: anonAuth, error: anonErr } = await supabase.auth.signInAnonymously();
-                        if (!anonErr && anonAuth?.user) {
-                            currentUser = anonAuth.user;
-                        }
-                    } catch (e) {
-                        console.log("Anon auth skipped or disabled:", e);
-                    }
-                    updateAuthUI(currentUser, true);
-                }
-            } catch (err) {
-                console.error("Error checking auth session:", err);
-                updateAuthUI(null, true);
-            }
-
-            await loadUserVehicles();
-
-            supabase.auth.onAuthStateChange(async (event, session) => {
-                if (session && session.user) {
-                    currentUser = session.user;
-                    updateAuthUI(currentUser, true);
-                } else {
-                    currentUser = null;
-                    updateAuthUI(null, !!supabase);
-                }
-                await loadUserVehicles();
-            });
-        }
-
-        function updateAuthUI(user, isOnlineConnected) {
-            const profileBadge = document.getElementById('userProfileBadge');
-            const btnOpenAuth = document.getElementById('btnOpenAuthModal');
-            const statusIcon = document.getElementById('statusIcon');
-            const statusText = document.getElementById('statusText');
-            const emailText = document.getElementById('userEmailText');
-
-            if (user && !user.is_anonymous) {
-                profileBadge.classList.remove('hidden');
-                btnOpenAuth.classList.add('hidden');
-                emailText.textContent = user.email;
-                statusIcon.className = "fa-solid fa-circle text-emerald-400 text-[10px] mr-1.5";
-                statusText.textContent = "Online Supabase";
-            } else if (isOnlineConnected) {
-                profileBadge.classList.add('hidden');
-                btnOpenAuth.classList.remove('hidden');
-                statusIcon.className = "fa-solid fa-circle text-emerald-400 text-[10px] mr-1.5";
-                statusText.textContent = "Trực tuyến (Supabase)";
-            } else {
-                profileBadge.classList.add('hidden');
-                btnOpenAuth.classList.remove('hidden');
-                statusIcon.className = "fa-solid fa-circle text-amber-400 text-[10px] mr-1.5";
-                statusText.textContent = "Offline (Chưa nhập Key)";
-            }
-        }
-
-        async function loadUserVehicles() {
-            if (supabase) {
-                try {
-                    let query = supabase.from('vehicles').select('*');
-                    if (currentUser) {
-                        query = query.eq('user_id', currentUser.id);
-                    }
-                    const { data, error } = await query.order('created_at', { ascending: true });
-
-                    if (error) {
-                        console.error('Lỗi tải phương tiện online:', error.message);
-                        loadLocalVehicles();
-                    } else {
-                        vehicles = data || [];
-                    }
-                } catch (err) {
-                    console.error('Lỗi kết nối Supabase:', err);
-                    loadLocalVehicles();
-                }
-            } else {
-                loadLocalVehicles();
-            }
-
-            renderVehicleSelect();
-
-            if (vehicles.length > 0) {
-                if (!selectedVehicleId || !vehicles.find(v => v.id === selectedVehicleId)) {
-                    selectedVehicleId = vehicles[0].id;
-                }
-                document.getElementById('vehicleSelect').value = selectedVehicleId;
-                await loadLogsForVehicle();
-            } else {
-                selectedVehicleId = null;
-                resetData();
-            }
-        }
-
-        function loadLocalVehicles() {
-            const localData = localStorage.getItem(LOCAL_STORAGE_VEHICLES);
-            if (localData) {
-                try { vehicles = JSON.parse(localData); } catch (e) { vehicles = []; }
-            } else {
-                vehicles = [{
-                    id: 'demo-v1',
-                    name: 'Xe Máy Mẫu (Honda Wave)',
-                    plate_number: '29A-123.45',
-                    vehicle_type: 'Xe máy',
-                    initial_odometer: 12000,
-                    created_at: new Date().toISOString()
-                }];
-                localStorage.setItem(LOCAL_STORAGE_VEHICLES, JSON.stringify(vehicles));
-            }
-        }
-
-        async function handleVehicleSubmit(e) {
-            e.preventDefault();
-            const name = document.getElementById('vName').value.trim();
-            const plate = document.getElementById('vPlate').value.trim();
-            const type = document.getElementById('vType').value;
-            const odo = parseFloat(document.getElementById('vOdo').value) || 0;
-
-            if (supabase) {
-                const vehicleObj = {
-                    name: name,
-                    plate_number: plate,
-                    vehicle_type: type,
-                    initial_odometer: odo
-                };
-                if (currentUser) vehicleObj.user_id = currentUser.id;
-
-                const { error } = await supabase.from('vehicles').insert([vehicleObj]);
-
-                if (error) {
-                    alert('Lỗi thêm xe online: ' + error.message);
-                    return;
-                }
-            } else {
-                const newV = {
-                    id: 'local-' + Date.now(),
-                    name: name,
-                    plate_number: plate,
-                    vehicle_type: type,
-                    initial_odometer: odo,
-                    created_at: new Date().toISOString()
-                };
-                vehicles.push(newV);
-                localStorage.setItem(LOCAL_STORAGE_VEHICLES, JSON.stringify(vehicles));
-                selectedVehicleId = newV.id;
-            }
-
-            closeModal('vehicleModal');
-            document.getElementById('vehicleForm').reset();
-            await loadUserVehicles();
-        }
-
-        async function loadLogsForVehicle() {
-            if (!selectedVehicleId) {
-                resetData();
-                return;
-            }
-
-            if (supabase) {
-                const { data: fuelData, error: fErr } = await supabase
-                    .from('fuel_logs')
-                    .select('*')
-                    .eq('vehicle_id', selectedVehicleId)
-                    .order('odometer', { ascending: true });
-
-                const { data: maintData, error: mErr } = await supabase
-                    .from('maintenance_logs')
-                    .select('*')
-                    .eq('vehicle_id', selectedVehicleId)
-                    .order('odometer', { ascending: false });
-
-                if (fErr) console.error('Lỗi tải nhật ký xăng online:', fErr.message);
-                if (mErr) console.error('Lỗi tải nhật ký bảo dưỡng online:', mErr.message);
-
-                fuelLogs = fuelData || [];
-                maintLogs = maintData || [];
-            } else {
-                const allFuel = JSON.parse(localStorage.getItem(LOCAL_STORAGE_FUEL) || '[]');
-                const allMaint = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MAINT) || '[]');
-
-                fuelLogs = allFuel.filter(f => f.vehicle_id === selectedVehicleId).sort((a,b) => a.odometer - b.odometer);
-                maintLogs = allMaint.filter(m => m.vehicle_id === selectedVehicleId).sort((a,b) => b.odometer - a.odometer);
-            }
-
-            calculateFuelConsumption();
-            renderFuelTable();
-            renderMaintTable();
-            updateStatsAndCharts();
-        }
-
-        async function handleFuelSubmit(e) {
-            e.preventDefault();
-
-            const date = document.getElementById('fDate').value;
-            const odo = parseFloat(document.getElementById('fOdo').value);
-            const price = parseFloat(document.getElementById('fPricePerLiter').value);
-            const cost = parseFloat(document.getElementById('fTotalCost').value);
-
-            if (supabase) {
-                const fuelObj = {
-                    vehicle_id: selectedVehicleId,
-                    log_date: date,
-                    odometer: odo,
-                    price_per_liter: price,
-                    total_cost: cost
-                };
-                if (currentUser) fuelObj.user_id = currentUser.id;
-
-                const { error } = await supabase.from('fuel_logs').insert([fuelObj]);
-
-                if (error) {
-                    alert('Lỗi ghi nhận đổ xăng online: ' + error.message);
-                    return;
-                }
-            } else {
-                const allFuel = JSON.parse(localStorage.getItem(LOCAL_STORAGE_FUEL) || '[]');
-                allFuel.push({
-                    id: 'flog-' + Date.now(),
-                    vehicle_id: selectedVehicleId,
-                    log_date: date,
-                    odometer: odo,
-                    price_per_liter: price,
-                    total_cost: cost
-                });
-                localStorage.setItem(LOCAL_STORAGE_FUEL, JSON.stringify(allFuel));
-            }
-
-            closeModal('fuelModal');
-            document.getElementById('fuelForm').reset();
-            document.getElementById('fDate').valueAsDate = new Date();
-            await loadLogsForVehicle();
-        }
-
-        async function handleMaintSubmit(e) {
-            e.preventDefault();
-
-            const date = document.getElementById('mDate').value;
-            const odo = parseFloat(document.getElementById('mOdo').value);
-            const details = document.getElementById('mDetails').value.trim();
-            const serviceCost = parseFloat(document.getElementById('mServiceCost').value);
-            const vatPercent = parseFloat(document.getElementById('mVatPercent').value) || 0;
-            const total = serviceCost + (serviceCost * vatPercent / 100);
-
-            if (supabase) {
-                const maintObj = {
-                    vehicle_id: selectedVehicleId,
-                    log_date: date,
-                    odometer: odo,
-                    details: details,
-                    service_cost: serviceCost,
-                    vat_percent: vatPercent,
-                    total_cost: total
-                };
-                if (currentUser) maintObj.user_id = currentUser.id;
-
-                const { error } = await supabase.from('maintenance_logs').insert([maintObj]);
-
-                if (error) {
-                    alert('Lỗi ghi nhận bảo dưỡng online: ' + error.message);
-                    return;
-                }
-            } else {
-                const allMaint = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MAINT) || '[]');
-                allMaint.push({
-                    id: 'mlog-' + Date.now(),
-                    vehicle_id: selectedVehicleId,
-                    log_date: date,
-                    odometer: odo,
-                    details: details,
-                    service_cost: serviceCost,
-                    vat_percent: vatPercent,
-                    total_cost: total
-                });
-                localStorage.setItem(LOCAL_STORAGE_MAINT, JSON.stringify(allMaint));
-            }
-
-            closeModal('maintModal');
-            document.getElementById('maintForm').reset();
-            document.getElementById('mDate').valueAsDate = new Date();
-            await loadLogsForVehicle();
-        }
-
-        async function deleteFuelLog(id) {
-            if (!confirm('Bạn có chắc chắn muốn xóa nhật ký đổ xăng này?')) return;
-
-            if (supabase) {
-                const { error } = await supabase.from('fuel_logs').delete().eq('id', id);
-                if (error) alert('Lỗi xóa dữ liệu online: ' + error.message);
-                else await loadLogsForVehicle();
-            } else {
-                let allFuel = JSON.parse(localStorage.getItem(LOCAL_STORAGE_FUEL) || '[]');
-                allFuel = allFuel.filter(f => f.id !== id);
-                localStorage.setItem(LOCAL_STORAGE_FUEL, JSON.stringify(allFuel));
-                await loadLogsForVehicle();
-            }
-        }
-
-        async function deleteMaintLog(id) {
-            if (!confirm('Bạn có chắc chắn muốn xóa nhật ký bảo dưỡng này?')) return;
-
-            if (supabase) {
-                const { error } = await supabase.from('maintenance_logs').delete().eq('id', id);
-                if (error) alert('Lỗi xóa dữ liệu online: ' + error.message);
-                else await loadLogsForVehicle();
-            } else {
-                let allMaint = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MAINT) || '[]');
-                allMaint = allMaint.filter(m => m.id !== id);
-                localStorage.setItem(LOCAL_STORAGE_MAINT, JSON.stringify(allMaint));
-                await loadLogsForVehicle();
-            }
-        }
-
-        function updateStatsAndCharts() {
-            const curVehicle = vehicles.find(v => v.id === selectedVehicleId);
-            let maxOdo = curVehicle ? curVehicle.initial_odometer : 0;
-
-            let totalFuelCost = 0;
-            let validConsumptions = [];
-
-            fuelLogs.forEach(f => {
-                totalFuelCost += f.total_cost;
-                if (f.odometer > maxOdo) maxOdo = f.odometer;
-                if (f.consumption) validConsumptions.push(f.consumption);
-            });
-
-            let totalMaintCost = 0;
-            maintLogs.forEach(m => {
-                totalMaintCost += m.total_cost;
-                if (m.odometer > maxOdo) maxOdo = m.odometer;
-            });
-
-            const avgCons = validConsumptions.length > 0 
-                ? (validConsumptions.reduce((a, b) => a + b, 0) / validConsumptions.length)
-                : 0;
-
-            document.getElementById('statOdo').innerHTML = `${maxOdo.toLocaleString()} <span class="text-sm font-normal text-slate-500">km</span>`;
-            document.getElementById('statAvgCons').innerHTML = `${avgCons.toFixed(1)} <span class="text-sm font-normal text-slate-500">L/100km</span>`;
-            document.getElementById('statFuelCost').innerHTML = `${formatVND(totalFuelCost)}`;
-            document.getElementById('statMaintCost').innerHTML = `${formatVND(totalMaintCost)}`;
-
-            renderCharts(fuelLogs, totalFuelCost, totalMaintCost);
-        }
-
-        function renderCharts(fuelLogs, fuelCost, maintCost) {
-            const ctxLine = document.getElementById('consumptionChart').getContext('2d');
-            const filteredLogs = fuelLogs.filter(f => f.consumption !== null);
-
-            const labels = filteredLogs.map(f => f.log_date);
-            const dataPoints = filteredLogs.map(f => f.consumption.toFixed(2));
-
-            if (consumptionChartInstance) consumptionChartInstance.destroy();
-            consumptionChartInstance = new Chart(ctxLine, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Mức tiêu thụ (L/100km)',
-                        data: dataPoints,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: false } }
-                }
-            });
-
-            const ctxPie = document.getElementById('costPieChart').getContext('2d');
-            if (costPieChartInstance) costPieChartInstance.destroy();
-            costPieChartInstance = new Chart(ctxPie, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Chi phí Xăng', 'Chi phí Bảo dưỡng'],
-                    datasets: [{
-                        data: [fuelCost, maintCost],
-                        backgroundColor: ['#f59e0b', '#a855f7']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-        }
-
-        function switchTab(tabName) {
-            document.getElementById('tabFuel').classList.add('hidden');
-            document.getElementById('tabMaint').classList.add('hidden');
-            document.getElementById('tabCharts').classList.add('hidden');
-
-            document.getElementById('tabFuelBtn').className = "border-transparent text-slate-500 hover:text-slate-700 py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2";
-            document.getElementById('tabMaintBtn').className = "border-transparent text-slate-500 hover:text-slate-700 py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2";
-            document.getElementById('tabChartBtn').className = "border-transparent text-slate-500 hover:text-slate-700 py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2";
-
-            if (tabName === 'fuel') {
-                document.getElementById('tabFuel').classList.remove('hidden');
-                document.getElementById('tabFuelBtn').className = "border-indigo-600 text-indigo-600 py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2";
-            } else if (tabName === 'maint') {
-                document.getElementById('tabMaint').classList.remove('hidden');
-                document.getElementById('tabMaintBtn').className = "border-indigo-600 text-indigo-600 py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2";
-            } else if (tabName === 'charts') {
-                document.getElementById('tabCharts').classList.remove('hidden');
-                document.getElementById('tabChartBtn').className = "border-indigo-600 text-indigo-600 py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2";
-            }
-        }
-
-        function formatVND(val) {
-            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
-        }
-
-        function openModal(id) {
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        function resetData() {
-            fuelLogs = [];
-            maintLogs = [];
-            renderFuelTable();
-            renderMaintTable();
-            document.getElementById('statOdo').innerHTML = `0 <span class="text-sm font-normal text-slate-500">km</span>`;
-            document.getElementById('statAvgCons').innerHTML = `0.0 <span class="text-sm font-normal text-slate-500">L/100km</span>`;
-            document.getElementById('statFuelCost').innerHTML = `0 đ`;
-            document.getElementById('statMaintCost').innerHTML = `0 đ`;
-        }
-    </script>
-</body>
-</html>
+                        <label class="block text-xs font-medium text
