@@ -42,6 +42,11 @@
                         <i class="fa-solid fa-gear mr-1.5"></i> Key Supabase
                     </button>
 
+                    <!-- Online/Offline Status Badge -->
+                    <span id="guestBadge" class="text-xs bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full font-medium flex items-center">
+                        <i id="statusIcon" class="fa-solid fa-circle text-amber-400 text-[10px] mr-1.5"></i> <span id="statusText">Chế độ Offline (Chưa nhập Key)</span>
+                    </span>
+
                     <!-- User status (Shown when logged in) -->
                     <div id="userProfileBadge" class="hidden flex items-center space-x-3">
                         <span class="text-xs sm:text-sm font-medium text-slate-300 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
@@ -53,8 +58,8 @@
                     </div>
 
                     <!-- Login trigger (Shown when logged out) -->
-                    <button id="btnOpenAuthModal" class="hidden bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm px-4 py-2 rounded-lg transition font-semibold shadow">
-                        <i class="fa-solid fa-right-to-bracket mr-1.5"></i> Đăng Nhập / Đăng Ký
+                    <button id="btnOpenAuthModal" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm px-3.5 py-1.5 rounded-lg transition font-semibold shadow">
+                        <i class="fa-solid fa-right-to-bracket mr-1.5"></i> Tài khoản Cloud
                     </button>
                 </div>
             </div>
@@ -325,4 +330,587 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Số KM trên đồng hồ (Odometer)</label>
-                    <input type="number" id="fOdo" required min="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emera
+                    <input type="number" id="fOdo" required min="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="VD: 15200">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Giá xăng (đ/Lít)</label>
+                        <input type="number" id="fPricePerLiter" required min="1000" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="24500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Tổng số tiền (VNĐ)</label>
+                        <input type="number" id="fTotalCost" required min="1000" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="500000">
+                    </div>
+                </div>
+                <div class="p-3 bg-emerald-50 rounded-lg text-emerald-800 text-xs font-medium flex justify-between items-center">
+                    <span>Số Lít dự tính:</span>
+                    <span id="fCalcLiters" class="font-bold text-sm">0.00 L</span>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg text-sm shadow">
+                    Ghi Nhận Đổ Xăng
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: MAINTENANCE LOG -->
+    <div id="maintModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div class="p-5 bg-purple-600 text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg">Thêm Nhật Ký Bảo Dưỡng</h3>
+                <button class="text-purple-200 hover:text-white" onclick="closeModal('maintModal')"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="maintForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Ngày thực hiện</label>
+                    <input type="date" id="mDate" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Số KM hiện tại (Odometer)</label>
+                    <input type="number" id="mOdo" required min="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500" placeholder="VD: 10000">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Chi tiết dịch vụ / Thay phụ tùng</label>
+                    <textarea id="mDetails" required rows="2" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500" placeholder="VD: Thay nhớt máy, lọc gió, kiểm tra phanh..."></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Tiền dịch vụ/phụ tùng (đ)</label>
+                        <input type="number" id="mServiceCost" required min="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500" placeholder="350000">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Thuế VAT (%)</label>
+                        <input type="number" id="mVatPercent" min="0" max="100" value="10" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500">
+                    </div>
+                </div>
+                <div class="p-3 bg-purple-50 rounded-lg text-purple-800 text-xs font-medium flex justify-between items-center">
+                    <span>Tổng thanh toán (+VAT):</span>
+                    <span id="mCalcTotal" class="font-bold text-sm">0 đ</span>
+                </div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 rounded-lg text-sm shadow">
+                    Ghi Nhận Bảo Dưỡng
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 5: SUPABASE CONFIGURATION -->
+    <div id="configModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div class="p-5 bg-slate-800 text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-key mr-2 text-indigo-400"></i>Cấu Hình Supabase API</h3>
+                <button class="text-slate-400 hover:text-white" onclick="closeModal('configModal')"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="configForm" class="p-6 space-y-4">
+                <p class="text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    Nhập thông tin kết nối Supabase của bạn (Lấy trong Supabase Project Settings -> API).
+                </p>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Supabase URL</label>
+                    <input type="text" id="cfgUrl" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500" placeholder="https://xyz.supabase.co">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Supabase Anon Key</label>
+                    <input type="text" id="cfgKey" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500" placeholder="eyJh...">
+                </div>
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-lg text-sm shadow">
+                    Lưu & Kết Nối Supabase
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY_URL = 'autotracker_supabase_url';
+        const STORAGE_KEY_ANON = 'autotracker_supabase_key';
+        const LOCAL_STORAGE_VEHICLES = 'autotracker_local_vehicles';
+        const LOCAL_STORAGE_FUEL = 'autotracker_local_fuel';
+        const LOCAL_STORAGE_MAINT = 'autotracker_local_maint';
+
+        let supabase = null;
+        let currentUser = null;
+        let isSignUpMode = false;
+
+        let vehicles = [];
+        let selectedVehicleId = null;
+        let fuelLogs = [];
+        let maintLogs = [];
+
+        let consumptionChartInstance = null;
+        let costPieChartInstance = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initSupabaseClient();
+            setupEventListeners();
+            document.getElementById('fDate').valueAsDate = new Date();
+            document.getElementById('mDate').valueAsDate = new Date();
+        });
+
+        async function initSupabaseClient() {
+            let url = localStorage.getItem(STORAGE_KEY_URL) || "";
+            let key = localStorage.getItem(STORAGE_KEY_ANON) || "";
+
+            document.getElementById('cfgUrl').value = url;
+            document.getElementById('cfgKey').value = key;
+
+            if (url && key && url.includes('supabase.co')) {
+                try {
+                    supabase = window.supabase.createClient(url, key);
+                    await checkAuthSession();
+                } catch (err) {
+                    console.error("Lỗi khởi tạo Supabase client:", err);
+                    updateAuthUI(null, false);
+                    await loadUserVehicles();
+                }
+            } else {
+                updateAuthUI(null, false);
+                await loadUserVehicles();
+            }
+        }
+
+        async function checkAuthSession() {
+            if (!supabase) {
+                await loadUserVehicles();
+                return;
+            }
+
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session && session.user) {
+                    currentUser = session.user;
+                    updateAuthUI(currentUser, true);
+                } else {
+                    // Thử đăng nhập ẩn danh trực tiếp để có user_id kết nối Online
+                    try {
+                        const { data: anonAuth, error: anonErr } = await supabase.auth.signInAnonymously();
+                        if (!anonErr && anonAuth?.user) {
+                            currentUser = anonAuth.user;
+                        }
+                    } catch (e) {
+                        console.log("Anon auth skipped or disabled:", e);
+                    }
+                    updateAuthUI(currentUser, true);
+                }
+            } catch (err) {
+                console.error("Error checking auth session:", err);
+                updateAuthUI(null, true);
+            }
+
+            await loadUserVehicles();
+
+            supabase.auth.onAuthStateChange(async (event, session) => {
+                if (session && session.user) {
+                    currentUser = session.user;
+                    updateAuthUI(currentUser, true);
+                } else {
+                    currentUser = null;
+                    updateAuthUI(null, !!supabase);
+                }
+                await loadUserVehicles();
+            });
+        }
+
+        function updateAuthUI(user, isOnlineConnected) {
+            const profileBadge = document.getElementById('userProfileBadge');
+            const btnOpenAuth = document.getElementById('btnOpenAuthModal');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            const emailText = document.getElementById('userEmailText');
+
+            if (user && !user.is_anonymous) {
+                profileBadge.classList.remove('hidden');
+                btnOpenAuth.classList.add('hidden');
+                emailText.textContent = user.email;
+                statusIcon.className = "fa-solid fa-circle text-emerald-400 text-[10px] mr-1.5";
+                statusText.textContent = "Online Supabase";
+            } else if (isOnlineConnected) {
+                profileBadge.classList.add('hidden');
+                btnOpenAuth.classList.remove('hidden');
+                statusIcon.className = "fa-solid fa-circle text-emerald-400 text-[10px] mr-1.5";
+                statusText.textContent = "Trực tuyến (Supabase)";
+            } else {
+                profileBadge.classList.add('hidden');
+                btnOpenAuth.classList.remove('hidden');
+                statusIcon.className = "fa-solid fa-circle text-amber-400 text-[10px] mr-1.5";
+                statusText.textContent = "Offline (Chưa nhập Key)";
+            }
+        }
+
+        async function loadUserVehicles() {
+            if (supabase) {
+                try {
+                    let query = supabase.from('vehicles').select('*');
+                    if (currentUser) {
+                        query = query.eq('user_id', currentUser.id);
+                    }
+                    const { data, error } = await query.order('created_at', { ascending: true });
+
+                    if (error) {
+                        console.error('Lỗi tải phương tiện online:', error.message);
+                        loadLocalVehicles();
+                    } else {
+                        vehicles = data || [];
+                    }
+                } catch (err) {
+                    console.error('Lỗi kết nối Supabase:', err);
+                    loadLocalVehicles();
+                }
+            } else {
+                loadLocalVehicles();
+            }
+
+            renderVehicleSelect();
+
+            if (vehicles.length > 0) {
+                if (!selectedVehicleId || !vehicles.find(v => v.id === selectedVehicleId)) {
+                    selectedVehicleId = vehicles[0].id;
+                }
+                document.getElementById('vehicleSelect').value = selectedVehicleId;
+                await loadLogsForVehicle();
+            } else {
+                selectedVehicleId = null;
+                resetData();
+            }
+        }
+
+        function loadLocalVehicles() {
+            const localData = localStorage.getItem(LOCAL_STORAGE_VEHICLES);
+            if (localData) {
+                try { vehicles = JSON.parse(localData); } catch (e) { vehicles = []; }
+            } else {
+                vehicles = [{
+                    id: 'demo-v1',
+                    name: 'Xe Máy Mẫu (Honda Wave)',
+                    plate_number: '29A-123.45',
+                    vehicle_type: 'Xe máy',
+                    initial_odometer: 12000,
+                    created_at: new Date().toISOString()
+                }];
+                localStorage.setItem(LOCAL_STORAGE_VEHICLES, JSON.stringify(vehicles));
+            }
+        }
+
+        async function handleVehicleSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('vName').value.trim();
+            const plate = document.getElementById('vPlate').value.trim();
+            const type = document.getElementById('vType').value;
+            const odo = parseFloat(document.getElementById('vOdo').value) || 0;
+
+            if (supabase) {
+                const vehicleObj = {
+                    name: name,
+                    plate_number: plate,
+                    vehicle_type: type,
+                    initial_odometer: odo
+                };
+                if (currentUser) vehicleObj.user_id = currentUser.id;
+
+                const { error } = await supabase.from('vehicles').insert([vehicleObj]);
+
+                if (error) {
+                    alert('Lỗi thêm xe online: ' + error.message);
+                    return;
+                }
+            } else {
+                const newV = {
+                    id: 'local-' + Date.now(),
+                    name: name,
+                    plate_number: plate,
+                    vehicle_type: type,
+                    initial_odometer: odo,
+                    created_at: new Date().toISOString()
+                };
+                vehicles.push(newV);
+                localStorage.setItem(LOCAL_STORAGE_VEHICLES, JSON.stringify(vehicles));
+                selectedVehicleId = newV.id;
+            }
+
+            closeModal('vehicleModal');
+            document.getElementById('vehicleForm').reset();
+            await loadUserVehicles();
+        }
+
+        async function loadLogsForVehicle() {
+            if (!selectedVehicleId) {
+                resetData();
+                return;
+            }
+
+            if (supabase) {
+                const { data: fuelData, error: fErr } = await supabase
+                    .from('fuel_logs')
+                    .select('*')
+                    .eq('vehicle_id', selectedVehicleId)
+                    .order('odometer', { ascending: true });
+
+                const { data: maintData, error: mErr } = await supabase
+                    .from('maintenance_logs')
+                    .select('*')
+                    .eq('vehicle_id', selectedVehicleId)
+                    .order('odometer', { ascending: false });
+
+                if (fErr) console.error('Lỗi tải nhật ký xăng online:', fErr.message);
+                if (mErr) console.error('Lỗi tải nhật ký bảo dưỡng online:', mErr.message);
+
+                fuelLogs = fuelData || [];
+                maintLogs = maintData || [];
+            } else {
+                const allFuel = JSON.parse(localStorage.getItem(LOCAL_STORAGE_FUEL) || '[]');
+                const allMaint = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MAINT) || '[]');
+
+                fuelLogs = allFuel.filter(f => f.vehicle_id === selectedVehicleId).sort((a,b) => a.odometer - b.odometer);
+                maintLogs = allMaint.filter(m => m.vehicle_id === selectedVehicleId).sort((a,b) => b.odometer - a.odometer);
+            }
+
+            calculateFuelConsumption();
+            renderFuelTable();
+            renderMaintTable();
+            updateStatsAndCharts();
+        }
+
+        async function handleFuelSubmit(e) {
+            e.preventDefault();
+
+            const date = document.getElementById('fDate').value;
+            const odo = parseFloat(document.getElementById('fOdo').value);
+            const price = parseFloat(document.getElementById('fPricePerLiter').value);
+            const cost = parseFloat(document.getElementById('fTotalCost').value);
+
+            if (supabase) {
+                const fuelObj = {
+                    vehicle_id: selectedVehicleId,
+                    log_date: date,
+                    odometer: odo,
+                    price_per_liter: price,
+                    total_cost: cost
+                };
+                if (currentUser) fuelObj.user_id = currentUser.id;
+
+                const { error } = await supabase.from('fuel_logs').insert([fuelObj]);
+
+                if (error) {
+                    alert('Lỗi ghi nhận đổ xăng online: ' + error.message);
+                    return;
+                }
+            } else {
+                const allFuel = JSON.parse(localStorage.getItem(LOCAL_STORAGE_FUEL) || '[]');
+                allFuel.push({
+                    id: 'flog-' + Date.now(),
+                    vehicle_id: selectedVehicleId,
+                    log_date: date,
+                    odometer: odo,
+                    price_per_liter: price,
+                    total_cost: cost
+                });
+                localStorage.setItem(LOCAL_STORAGE_FUEL, JSON.stringify(allFuel));
+            }
+
+            closeModal('fuelModal');
+            document.getElementById('fuelForm').reset();
+            document.getElementById('fDate').valueAsDate = new Date();
+            await loadLogsForVehicle();
+        }
+
+        async function handleMaintSubmit(e) {
+            e.preventDefault();
+
+            const date = document.getElementById('mDate').value;
+            const odo = parseFloat(document.getElementById('mOdo').value);
+            const details = document.getElementById('mDetails').value.trim();
+            const serviceCost = parseFloat(document.getElementById('mServiceCost').value);
+            const vatPercent = parseFloat(document.getElementById('mVatPercent').value) || 0;
+            const total = serviceCost + (serviceCost * vatPercent / 100);
+
+            if (supabase) {
+                const maintObj = {
+                    vehicle_id: selectedVehicleId,
+                    log_date: date,
+                    odometer: odo,
+                    details: details,
+                    service_cost: serviceCost,
+                    vat_percent: vatPercent,
+                    total_cost: total
+                };
+                if (currentUser) maintObj.user_id = currentUser.id;
+
+                const { error } = await supabase.from('maintenance_logs').insert([maintObj]);
+
+                if (error) {
+                    alert('Lỗi ghi nhận bảo dưỡng online: ' + error.message);
+                    return;
+                }
+            } else {
+                const allMaint = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MAINT) || '[]');
+                allMaint.push({
+                    id: 'mlog-' + Date.now(),
+                    vehicle_id: selectedVehicleId,
+                    log_date: date,
+                    odometer: odo,
+                    details: details,
+                    service_cost: serviceCost,
+                    vat_percent: vatPercent,
+                    total_cost: total
+                });
+                localStorage.setItem(LOCAL_STORAGE_MAINT, JSON.stringify(allMaint));
+            }
+
+            closeModal('maintModal');
+            document.getElementById('maintForm').reset();
+            document.getElementById('mDate').valueAsDate = new Date();
+            await loadLogsForVehicle();
+        }
+
+        async function deleteFuelLog(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa nhật ký đổ xăng này?')) return;
+
+            if (supabase) {
+                const { error } = await supabase.from('fuel_logs').delete().eq('id', id);
+                if (error) alert('Lỗi xóa dữ liệu online: ' + error.message);
+                else await loadLogsForVehicle();
+            } else {
+                let allFuel = JSON.parse(localStorage.getItem(LOCAL_STORAGE_FUEL) || '[]');
+                allFuel = allFuel.filter(f => f.id !== id);
+                localStorage.setItem(LOCAL_STORAGE_FUEL, JSON.stringify(allFuel));
+                await loadLogsForVehicle();
+            }
+        }
+
+        async function deleteMaintLog(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa nhật ký bảo dưỡng này?')) return;
+
+            if (supabase) {
+                const { error } = await supabase.from('maintenance_logs').delete().eq('id', id);
+                if (error) alert('Lỗi xóa dữ liệu online: ' + error.message);
+                else await loadLogsForVehicle();
+            } else {
+                let allMaint = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MAINT) || '[]');
+                allMaint = allMaint.filter(m => m.id !== id);
+                localStorage.setItem(LOCAL_STORAGE_MAINT, JSON.stringify(allMaint));
+                await loadLogsForVehicle();
+            }
+        }
+
+        function updateStatsAndCharts() {
+            const curVehicle = vehicles.find(v => v.id === selectedVehicleId);
+            let maxOdo = curVehicle ? curVehicle.initial_odometer : 0;
+
+            let totalFuelCost = 0;
+            let validConsumptions = [];
+
+            fuelLogs.forEach(f => {
+                totalFuelCost += f.total_cost;
+                if (f.odometer > maxOdo) maxOdo = f.odometer;
+                if (f.consumption) validConsumptions.push(f.consumption);
+            });
+
+            let totalMaintCost = 0;
+            maintLogs.forEach(m => {
+                totalMaintCost += m.total_cost;
+                if (m.odometer > maxOdo) maxOdo = m.odometer;
+            });
+
+            const avgCons = validConsumptions.length > 0 
+                ? (validConsumptions.reduce((a, b) => a + b, 0) / validConsumptions.length)
+                : 0;
+
+            document.getElementById('statOdo').innerHTML = `${maxOdo.toLocaleString()} <span class="text-sm font-normal text-slate-500">km</span>`;
+            document.getElementById('statAvgCons').innerHTML = `${avgCons.toFixed(1)} <span class="text-sm font-normal text-slate-500">L/100km</span>`;
+            document.getElementById('statFuelCost').innerHTML = `${formatVND(totalFuelCost)}`;
+            document.getElementById('statMaintCost').innerHTML = `${formatVND(totalMaintCost)}`;
+
+            renderCharts(fuelLogs, totalFuelCost, totalMaintCost);
+        }
+
+        function renderCharts(fuelLogs, fuelCost, maintCost) {
+            const ctxLine = document.getElementById('consumptionChart').getContext('2d');
+            const filteredLogs = fuelLogs.filter(f => f.consumption !== null);
+
+            const labels = filteredLogs.map(f => f.log_date);
+            const dataPoints = filteredLogs.map(f => f.consumption.toFixed(2));
+
+            if (consumptionChartInstance) consumptionChartInstance.destroy();
+            consumptionChartInstance = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Mức tiêu thụ (L/100km)',
+                        data: dataPoints,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: false } }
+                }
+            });
+
+            const ctxPie = document.getElementById('costPieChart').getContext('2d');
+            if (costPieChartInstance) costPieChartInstance.destroy();
+            costPieChartInstance = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Chi phí Xăng', 'Chi phí Bảo dưỡng'],
+                    datasets: [{
+                        data: [fuelCost, maintCost],
+                        backgroundColor: ['#f59e0b', '#a855f7']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function switchTab(tabName) {
+            document.getElementById('tabFuel').classList.add('hidden');
+            document.getElementById('tabMaint').classList.add('hidden');
+            document.getElementById('tabCharts').classList.add('hidden');
+
+            document.getElementById('tabFuelBtn').className = "border-transparent text-slate-500 hover:text-slate-700 py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2";
+            document.getElementById('tabMaintBtn').className = "border-transparent text-slate-500 hover:text-slate-700 py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2";
+            document.getElementById('tabChartBtn').className = "border-transparent text-slate-500 hover:text-slate-700 py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2";
+
+            if (tabName === 'fuel') {
+                document.getElementById('tabFuel').classList.remove('hidden');
+                document.getElementById('tabFuelBtn').className = "border-indigo-600 text-indigo-600 py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2";
+            } else if (tabName === 'maint') {
+                document.getElementById('tabMaint').classList.remove('hidden');
+                document.getElementById('tabMaintBtn').className = "border-indigo-600 text-indigo-600 py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2";
+            } else if (tabName === 'charts') {
+                document.getElementById('tabCharts').classList.remove('hidden');
+                document.getElementById('tabChartBtn').className = "border-indigo-600 text-indigo-600 py-3 px-1 border-b-2 font-semibold text-sm flex items-center space-x-2";
+            }
+        }
+
+        function formatVND(val) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function resetData() {
+            fuelLogs = [];
+            maintLogs = [];
+            renderFuelTable();
+            renderMaintTable();
+            document.getElementById('statOdo').innerHTML = `0 <span class="text-sm font-normal text-slate-500">km</span>`;
+            document.getElementById('statAvgCons').innerHTML = `0.0 <span class="text-sm font-normal text-slate-500">L/100km</span>`;
+            document.getElementById('statFuelCost').innerHTML = `0 đ`;
+            document.getElementById('statMaintCost').innerHTML = `0 đ`;
+        }
+    </script>
+</body>
+</html>
