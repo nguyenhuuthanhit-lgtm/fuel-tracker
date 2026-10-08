@@ -175,21 +175,35 @@
     </main>
 
     <!-- Modals Input -->
-    <div id="modal-vehicle" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-50">
-        <form onsubmit="saveVehicle(event)" class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 space-y-4">
-            <h3 class="text-lg font-bold">Thêm Xe Mới</h3>
-            <input type="text" id="v-name" placeholder="Biển số / Tên xe" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm">
-            <select id="v-type" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm">
+   <!-- Modal thêm xe -->
+<div id="modal-vehicle" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-50">
+    <form onsubmit="saveVehicle(event)" class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 space-y-4">
+        <h3 class="text-lg font-bold">Thêm Xe Mới</h3>
+        
+        <div>
+            <label class="text-xs text-slate-400 mb-1 block">Tên xe / Biển số</label>
+            <input type="text" id="v-name" placeholder="Ví dụ: Kia Soluto / 79A-12345" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
+        </div>
+
+        <div>
+            <label class="text-xs text-slate-400 mb-1 block">Loại phương tiện</label>
+            <select id="v-type" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
                 <option value="Ô tô">Ô tô</option>
                 <option value="Xe máy">Xe máy</option>
             </select>
-            <input type="number" id="v-odo" placeholder="Số Km ban đầu" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm">
-            <div class="flex justify-end gap-2">
-                <button type="button" onclick="closeModal('modal-vehicle')" class="px-4 py-2 bg-slate-700 rounded text-sm">Hủy</button>
-                <button type="submit" class="px-4 py-2 bg-emerald-600 rounded text-sm font-medium">Lưu Xe</button>
-            </div>
-        </form>
-    </div>
+        </div>
+
+        <div>
+            <label class="text-xs text-slate-400 mb-1 block">Số Km ban đầu</label>
+            <input type="number" id="v-odo" placeholder="Số Km hiện tại" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+            <button type="button" onclick="closeModal('modal-vehicle')" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm transition">Hủy</button>
+            <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-sm font-medium transition">Lưu Xe</button>
+        </div>
+    </form>
+</div>
 
     <div id="modal-fuel" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-50">
         <form onsubmit="saveFuel(event)" class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 space-y-4">
@@ -421,22 +435,44 @@
             chartCost.update();
         }
 
-        async function saveVehicle(e) {
-            e.preventDefault();
-            const newV = {
-                user_id: currentUser.id,
-                plate_number: document.getElementById('v-name').value,
-                vehicle_type: document.getElementById('v-type').value,
-                initial_odometer: parseFloat(document.getElementById('v-odo').value)
-            };
-            const { data, error } = await supabaseClient.from('vehicles').insert([newV]).select();
-            if (error) alert("Lỗi lưu xe: " + error.message);
-            else {
-                vehicles.push(data[0]);
-                activeVehicleId = data[0].id;
-                closeModal('modal-vehicle');
-                fetchData();
-            }
+       async function saveVehicle(e) {
+    e.preventDefault();
+    const vehicleName = document.getElementById('v-name').value.trim();
+    const vehicleType = document.getElementById('v-type').value;
+    const initialOdo = parseFloat(document.getElementById('v-odo').value) || 0;
+
+    const newV = {
+        user_id: currentUser.id,
+        name: vehicleName,              // Cột 'name' trên Supabase
+        plate_number: vehicleName,      // Cột 'plate_number' trên Supabase
+        vehicle_type: vehicleType,
+        initial_odometer: initialOdo
+    };
+
+    const { data, error } = await supabaseClient.from('vehicles').insert([newV]).select();
+    if (error) {
+        alert("Lỗi lưu xe: " + error.message);
+    } else {
+        vehicles.push(data[0]);
+        activeVehicleId = data[0].id;
+        closeModal('modal-vehicle');
+        fetchData();
+    }
+}
+
+function renderVehicleSelect() {
+    const sel = document.getElementById('vehicle-select');
+    if (vehicles.length === 0) {
+        sel.innerHTML = '<option value="">-- Chưa có xe nào --</option>';
+    } else {
+        sel.innerHTML = vehicles.map(v => {
+            const displayName = v.name || v.plate_number || 'Xe không tên';
+            const displayType = v.vehicle_type ? ` (${v.vehicle_type})` : '';
+            return `<option value="${v.id}">${displayName}${displayType}</option>`;
+        }).join('');
+        if (activeVehicleId) sel.value = activeVehicleId;
+    }
+}
         }
 
         async function saveFuel(e) {
