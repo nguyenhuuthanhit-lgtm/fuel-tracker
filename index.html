@@ -62,13 +62,18 @@
         <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3">
                 <i data-lucide="car" class="w-6 h-6 text-emerald-400"></i>
-                <div>
-                    <label class="text-xs text-slate-400 block font-medium">Phương tiện hiện tại</label>
-                    <select id="vehicle-select" onchange="switchVehicle(this.value)" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-sm font-semibold text-emerald-400 focus:outline-none">
-                    </select>
+                <div class="flex items-end gap-2">
+                    <div>
+                        <label class="text-xs text-slate-400 block font-medium">Phương tiện hiện tại</label>
+                        <select id="vehicle-select" onchange="switchVehicle(this.value)" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-sm font-semibold text-emerald-400 focus:outline-none">
+                        </select>
+                    </div>
+                    <button onclick="openEditVehicleModal()" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-lg text-amber-400 transition" title="Chỉnh sửa xe hiện tại">
+                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                    </button>
                 </div>
             </div>
-            <button onclick="openModal('modal-vehicle')" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+            <button onclick="openAddVehicleModal()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i> Thêm xe mới
             </button>
         </div>
@@ -106,12 +111,16 @@
         <!-- Charts -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                <h3 class="font-bold mb-4 text-slate-200">Biểu đồ Tiêu thụ (L/100km)</h3>
+                <h3 class="font-bold mb-4 text-slate-200 flex items-center gap-2">
+                    <i data-lucide="line-chart" class="w-4 h-4 text-emerald-400"></i> Mức Tiêu Thụ Nhiên Liệu (L/100km)
+                </h3>
                 <div class="h-60"><canvas id="chart-consumption"></canvas></div>
             </div>
             <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                <h3 class="font-bold mb-4 text-slate-200">Phân bổ Chi phí</h3>
-                <div class="h-60 flex justify-center"><canvas id="chart-cost"></canvas></div>
+                <h3 class="font-bold mb-4 text-slate-200 flex items-center gap-2">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-cyan-400"></i> Lịch Sử Giá Xăng (VNĐ/Lít)
+                </h3>
+                <div class="h-60"><canvas id="chart-fuel-price"></canvas></div>
             </div>
         </div>
 
@@ -169,19 +178,29 @@
 
     </main>
 
-    <!-- Modal Thêm Xe -->
+    <!-- Modal Thêm / Chỉnh Sửa Xe -->
     <div id="modal-vehicle" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-50">
         <form onsubmit="saveVehicle(event)" class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 space-y-4">
-            <h3 class="text-lg font-bold">Thêm Xe Mới</h3>
-            <input type="text" id="v-name" placeholder="Tên xe / Biển số (ví dụ: Kia Soluto)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
-            <select id="v-type" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
-                <option value="Ô tô">Ô tô</option>
-                <option value="Xe máy">Xe máy</option>
-            </select>
-            <input type="text" id="v-odo" placeholder="Số Km ban đầu" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
-            <div class="flex justify-end gap-2">
+            <h3 class="text-lg font-bold text-emerald-400" id="v-modal-title">Thêm Xe Mới</h3>
+            <input type="hidden" id="v-id">
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Tên xe / Biển số</label>
+                <input type="text" id="v-name" placeholder="Ví dụ: Kia Soluto (79A-277.68)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Loại phương tiện</label>
+                <select id="v-type" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
+                    <option value="Ô tô">Ô tô</option>
+                    <option value="Xe máy">Xe máy</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Số Km ban đầu</label>
+                <input type="text" id="v-odo" placeholder="Ví dụ: 10,000" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
                 <button type="button" onclick="closeModal('modal-vehicle')" class="px-4 py-2 bg-slate-700 rounded text-sm">Hủy</button>
-                <button type="submit" class="px-4 py-2 bg-emerald-600 rounded text-sm font-medium">Lưu Xe</button>
+                <button type="submit" class="px-4 py-2 bg-emerald-600 rounded text-sm font-medium">Lưu Phương Tiện</button>
             </div>
         </form>
     </div>
@@ -191,11 +210,23 @@
         <form onsubmit="saveFuel(event)" class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 space-y-4">
             <h3 class="text-lg font-bold text-emerald-400" id="fuel-modal-title">Nhập Đổ Xăng</h3>
             <input type="hidden" id="f-id">
-            <input type="date" id="f-date" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
-            <input type="text" id="f-km" placeholder="Số Km lúc đổ" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
-            <input type="text" id="f-cost" placeholder="Tổng tiền (VNĐ)" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
-            <input type="text" id="f-price" placeholder="Giá xăng/Lít (VNĐ)" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
-            <div class="flex justify-end gap-2">
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Ngày đổ xăng</label>
+                <input type="date" id="f-date" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Số Km hiện tại</label>
+                <input type="text" id="f-km" placeholder="Số Km lúc đổ" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Tổng tiền (VNĐ)</label>
+                <input type="text" id="f-cost" placeholder="Ví dụ: 500,000" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Giá xăng / Lít (VNĐ)</label>
+                <input type="text" id="f-price" placeholder="Ví dụ: 23,500" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
                 <button type="button" onclick="closeModal('modal-fuel')" class="px-4 py-2 bg-slate-700 rounded text-sm">Hủy</button>
                 <button type="submit" class="px-4 py-2 bg-emerald-600 rounded text-sm font-medium">Lưu</button>
             </div>
@@ -207,12 +238,27 @@
         <form onsubmit="saveMaint(event)" class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 space-y-4">
             <h3 class="text-lg font-bold text-amber-400" id="maint-modal-title">Nhập Bảo Dưỡng</h3>
             <input type="hidden" id="m-id">
-            <input type="date" id="m-date" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400">
-            <input type="text" id="m-km" placeholder="Số Km bảo dưỡng" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400">
-            <textarea id="m-desc" placeholder="Nội dung công việc..." required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400" rows="2"></textarea>
-            <input type="text" id="m-cost" placeholder="Chi phí (VNĐ)" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400">
-            <input type="text" id="m-vat" placeholder="Thuế VAT (%)" value="10" oninput="formatNumberInput(this)" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400">
-            <div class="flex justify-end gap-2">
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Ngày bảo dưỡng</label>
+                <input type="date" id="m-date" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Số Km bảo dưỡng</label>
+                <input type="text" id="m-km" placeholder="Số Km hiện tại" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Nội dung công việc</label>
+                <textarea id="m-desc" placeholder="Thay nhớt, thay lọc gió..." required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400" rows="2"></textarea>
+            </div>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Chi phí dịch vụ (VNĐ)</label>
+                <input type="text" id="m-cost" placeholder="Ví dụ: 1,200,000" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Thuế VAT (%)</label>
+                <input type="text" id="m-vat" placeholder="10" value="10" oninput="formatNumberInput(this)" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
                 <button type="button" onclick="closeModal('modal-maint')" class="px-4 py-2 bg-slate-700 rounded text-sm">Hủy</button>
                 <button type="submit" class="px-4 py-2 bg-amber-600 rounded text-sm font-medium">Lưu</button>
             </div>
@@ -222,8 +268,8 @@
     <!-- Application Logic -->
     <script>
         // === CẤU HÌNH SUPABASE TRỰC TIẾP TẠI ĐÂY ===
-        const SUPABASE_URL = "https://dunvovhmtkkgmkjulasa.supabase.co"; // <--- DÒNG 230: Đổi thành URL của bạn
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bnZvdmhtdGtrZ21ranVsYXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MjcwNTcsImV4cCI6MjEwNzAwMzA1N30.uW6IGzucuR-olvTTW9HLjhQLl_QiRE5MIpN0-QO0MJc"; // <--- DÒNG 231: Đổi thành Key của bạn
+        const SUPABASE_URL = "https://dunvovhmtkkgmkjulasa.supabase.co"; // <--- DÒNG 260: Thay URL của bạn
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bnZvdmhtdGtrZ21ranVsYXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MjcwNTcsImV4cCI6MjEwNzAwMzA1N30.uW6IGzucuR-olvTTW9HLjhQLl_QiRE5MIpN0-QO0MJc"; // <--- DÒNG 261: Thay Key của bạn
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -232,7 +278,7 @@
         let fuelLogs = [];
         let maintLogs = [];
         let activeVehicleId = null;
-        let chartCons = null, chartCost = null;
+        let chartCons = null, chartPrice = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
@@ -388,7 +434,7 @@
             document.getElementById('stat-total-maint-cost').innerHTML = `${totalCostMaint.toLocaleString('vi-VN')} <span class="text-sm font-normal text-slate-400">VNĐ</span>`;
             document.getElementById('stat-maint-count').innerText = `${maints.length} Lần bảo dưỡng`;
 
-            // Bảng Đổ Xăng (Hiển thị ngày dd/mm/yyyy)
+            // Bảng Đổ Xăng
             document.getElementById('tbl-fuel').innerHTML = fuelsCalculated.slice().reverse().map(f => `
                 <tr class="hover:bg-slate-700/30">
                     <td class="p-3">${formatDateVN(f.log_date)}</td>
@@ -404,7 +450,7 @@
                 </tr>
             `).join('');
 
-            // Bảng Bảo Dưỡng (Hiển thị ngày dd/mm/yyyy)
+            // Bảng Bảo Dưỡng
             document.getElementById('tbl-maint').innerHTML = maints.map(m => {
                 const total = parseFloat(m.service_cost) * (1 + (parseFloat(m.vat_percent) || 0) / 100);
                 return `
@@ -424,36 +470,65 @@
 
             lucide.createIcons();
 
+            // Cập nhật Biểu đồ 1: Tiêu thụ (L/100km)
             const validL100 = fuelsCalculated.filter(f => f.l100 !== null);
             chartCons.data.labels = validL100.map(f => formatDateVN(f.log_date));
             chartCons.data.datasets[0].data = validL100.map(f => f.l100.toFixed(1));
             chartCons.update();
 
-            chartCost.data.datasets[0].data = [totalCostFuel, totalCostMaint];
-            chartCost.update();
+            // Cập nhật Biểu đồ 2: Lịch sử giá xăng (VNĐ/Lít)
+            chartPrice.data.labels = fuelsCalculated.map(f => formatDateVN(f.log_date));
+            chartPrice.data.datasets[0].data = fuelsCalculated.map(f => f.price_per_liter);
+            chartPrice.update();
         }
 
-        // --- SAVE HANDLERS ---
+        // --- MANAGE VEHICLES ---
+        function openAddVehicleModal() {
+            document.getElementById('v-modal-title').innerText = "Thêm Xe Mới";
+            document.getElementById('v-id').value = "";
+            document.getElementById('v-name').value = "";
+            document.getElementById('v-type').value = "Ô tô";
+            document.getElementById('v-odo').value = "";
+            openModal('modal-vehicle');
+        }
+
+        function openEditVehicleModal() {
+            const currentVehicle = vehicles.find(v => v.id == activeVehicleId);
+            if (!currentVehicle) return alert("Không tìm thấy phương tiện để sửa!");
+
+            document.getElementById('v-modal-title').innerText = "Chỉnh Sửa Thông Tin Xe";
+            document.getElementById('v-id').value = currentVehicle.id;
+            document.getElementById('v-name').value = currentVehicle.name || currentVehicle.plate_number || '';
+            document.getElementById('v-type').value = currentVehicle.vehicle_type || 'Ô tô';
+            document.getElementById('v-odo').value = (currentVehicle.initial_odometer || 0).toLocaleString('vi-VN');
+            openModal('modal-vehicle');
+        }
+
         async function saveVehicle(e) {
             e.preventDefault();
+            const id = document.getElementById('v-id').value;
             const vehicleName = document.getElementById('v-name').value.trim();
-            const newV = {
+            const payload = {
                 user_id: currentUser.id,
                 name: vehicleName,
                 plate_number: vehicleName,
                 vehicle_type: document.getElementById('v-type').value,
                 initial_odometer: parseNumber(document.getElementById('v-odo').value)
             };
-            const { data, error } = await supabaseClient.from('vehicles').insert([newV]).select();
-            if (error) alert("Lỗi lưu xe: " + error.message);
+
+            let res = id 
+                ? await supabaseClient.from('vehicles').update(payload).eq('id', id).select()
+                : await supabaseClient.from('vehicles').insert([payload]).select();
+
+            if (res.error) alert("Lỗi lưu xe: " + res.error.message);
             else {
-                vehicles.push(data[0]);
-                activeVehicleId = data[0].id;
                 closeModal('modal-vehicle');
+                if (!id) activeVehicleId = res.data[0].id;
                 fetchData();
             }
         }
 
+        // --- MANAGE FUEL LOGS ---
         function openFuelModal(data = null) {
             if (data) {
                 document.getElementById('fuel-modal-title').innerText = "Cập Nhật Đổ Xăng";
@@ -507,6 +582,7 @@
             }
         }
 
+        // --- MANAGE MAINTENANCE LOGS ---
         function openMaintModal(data = null) {
             if (data) {
                 document.getElementById('maint-modal-title').innerText = "Cập Nhật Bảo Dưỡng";
@@ -563,15 +639,39 @@
             }
         }
 
+        // --- CHART INITIALIZATION ---
         function initCharts() {
+            // Biểu đồ 1: Tiêu thụ nhiên liệu
             chartCons = new Chart(document.getElementById('chart-consumption'), {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'L/100km', data: [], borderColor: '#10b981', tension: 0.3 }] },
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'L/100km',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
                 options: { responsive: true, maintainAspectRatio: false }
             });
-            chartCost = new Chart(document.getElementById('chart-cost'), {
-                type: 'doughnut',
-                data: { labels: ['Xăng', 'Bảo dưỡng'], datasets: [{ data: [0, 0], backgroundColor: ['#06b6d4', '#f59e0b'] }] },
+
+            // Biểu đồ 2: Giá xăng theo thời gian
+            chartPrice = new Chart(document.getElementById('chart-fuel-price'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Giá xăng (VNĐ/Lít)',
+                        data: [],
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
                 options: { responsive: true, maintainAspectRatio: false }
             });
         }
