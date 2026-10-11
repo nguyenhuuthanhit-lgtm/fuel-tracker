@@ -108,6 +108,27 @@
             </div>
         </div>
 
+        <!-- Fuel Prediction Algorithm Widget -->
+        <div class="bg-gradient-to-r from-emerald-900/40 to-cyan-900/40 border border-emerald-500/30 rounded-xl p-5 shadow-lg">
+            <h3 class="font-bold text-emerald-400 mb-3 flex items-center gap-2">
+                <i data-lucide="compass" class="w-5 h-5"></i> Dự Báo & Nhắc Nhở Đổ Xăng (Thuật toán thông minh)
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm" id="fuel-prediction-box">
+                <div class="bg-slate-800/80 p-3.5 rounded-lg border border-slate-700">
+                    <span class="text-xs text-slate-400 block">Dung tích bình xăng</span>
+                    <span class="text-lg font-bold text-slate-100" id="pred-tank-size">0 Lít</span>
+                </div>
+                <div class="bg-slate-800/80 p-3.5 rounded-lg border border-slate-700">
+                    <span class="text-xs text-slate-400 block">Km tiếp theo nên đổ xăng</span>
+                    <span class="text-lg font-bold text-emerald-400" id="pred-next-km">Đang tính...</span>
+                </div>
+                <div class="bg-slate-800/80 p-3.5 rounded-lg border border-slate-700">
+                    <span class="text-xs text-slate-400 block">Số Lít dự kiến cần đổ (Đầy bình)</span>
+                    <span class="text-lg font-bold text-cyan-400" id="pred-liters-needed">Đang tính...</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Charts -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
@@ -195,6 +216,10 @@
                 </select>
             </div>
             <div>
+                <label class="text-xs text-slate-400 block mb-1">Dung tích bình xăng (Lít)</label>
+                <input type="text" id="v-tank" placeholder="Ví dụ: 45 (hoặc 4.5)" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
+            </div>
+            <div>
                 <label class="text-xs text-slate-400 block mb-1">Số Km ban đầu</label>
                 <input type="text" id="v-odo" placeholder="Ví dụ: 10,000" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-emerald-400">
             </div>
@@ -268,8 +293,8 @@
     <!-- Application Logic -->
     <script>
         // === CẤU HÌNH SUPABASE TRỰC TIẾP TẠI ĐÂY ===
-        const SUPABASE_URL = "https://dunvovhmtkkgmkjulasa.supabase.co"; // <--- DÒNG 260: Thay URL của bạn
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bnZvdmhtdGtrZ21ranVsYXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MjcwNTcsImV4cCI6MjEwNzAwMzA1N30.uW6IGzucuR-olvTTW9HLjhQLl_QiRE5MIpN0-QO0MJc"; // <--- DÒNG 261: Thay Key của bạn
+        const SUPABASE_URL = "https://your-project-id.supabase.co"; // <--- Thay URL của bạn
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // <--- Thay Key của bạn
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -286,7 +311,7 @@
             checkSession();
         });
 
-        // --- TÍNH NĂNG ĐỊNH DẠNG SỐ & NGÀY THÁNG ---
+        // --- ĐỊNH DẠNG SỐ & NGÀY THÁNG ---
         function formatNumberInput(input) {
             let val = input.value.replace(/[^0-9.]/g, '');
             const parts = val.split('.');
@@ -318,7 +343,6 @@
         async function handleSignIn() {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-pass').value.trim();
-
             if (!email || !password) return alert("Vui lòng nhập email và mật khẩu!");
 
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -332,7 +356,6 @@
         async function handleSignUp() {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-pass').value.trim();
-
             if (!email || !password) return alert("Vui lòng nhập email và mật khẩu!");
 
             const { data, error } = await supabaseClient.auth.signUp({ email, password });
@@ -400,6 +423,10 @@
         }
 
         function renderApp() {
+            const currentVehicle = vehicles.find(v => v.id == activeVehicleId);
+            const tankCapacity = currentVehicle ? (parseFloat(currentVehicle.tank_capacity) || 0) : 0;
+            document.getElementById('pred-tank-size').innerText = `${tankCapacity.toLocaleString('vi-VN')} Lít`;
+
             const fuels = fuelLogs.filter(f => f.vehicle_id == activeVehicleId).sort((a, b) => new Date(a.log_date) - new Date(b.log_date));
             const maints = maintLogs.filter(m => m.vehicle_id == activeVehicleId).sort((a, b) => new Date(b.log_date) - new Date(a.log_date));
 
@@ -428,7 +455,30 @@
                 totalCostMaint += parseFloat(m.service_cost) * (1 + (parseFloat(m.vat_percent) || 0) / 100);
             });
 
-            document.getElementById('stat-avg-consumption').innerHTML = `${countL100 > 0 ? (sumL100 / countL100).toFixed(1) : '0.0'} <span class="text-sm font-normal text-slate-400">L/100km</span>`;
+            const avgConsumption = countL100 > 0 ? (sumL100 / countL100) : 0;
+
+            // --- THUẬT TOÁN DỰ BÁO TIẾP THEO ---
+            if (fuels.length > 0 && avgConsumption > 0 && tankCapacity > 0) {
+                const lastFuel = fuels[fuels.length - 1]; // Lần đổ gần nhất
+                const lastOdometer = parseFloat(lastFuel.odometer);
+                const lastLitersFilled = lastFuel.total_cost / lastFuel.price_per_liter;
+
+                // 1. Số Km tối đa đi được với bình xăng đầy
+                const maxRangeKm = (tankCapacity / avgConsumption) * 100;
+                // 2. Km tiếp theo nên đổ (Dự kiến đổ khi bình còn khoảng 10% - 15% hoặc mức an toàn)
+                const recommendedNextOdometer = lastOdometer + Math.round(maxRangeKm * 0.85);
+                // 3. Số lít cần đổ ước tính (Giả sử hiện tại bình còn 15% dung tích)
+                const estimatedRemainingLiters = tankCapacity * 0.15;
+                const litersNeededToFill = Math.max(0, tankCapacity - estimatedRemainingLiters);
+
+                document.getElementById('pred-next-km').innerText = `${recommendedNextOdometer.toLocaleString('vi-VN')} Km`;
+                document.getElementById('pred-liters-needed').innerText = `~ ${litersNeededToFill.toFixed(1)} Lít`;
+            } else {
+                document.getElementById('pred-next-km').innerText = "Chưa đủ dữ liệu";
+                document.getElementById('pred-liters-needed').innerText = "Chưa đủ dữ liệu";
+            }
+
+            document.getElementById('stat-avg-consumption').innerHTML = `${avgConsumption.toFixed(1)} <span class="text-sm font-normal text-slate-400">L/100km</span>`;
             document.getElementById('stat-total-fuel-cost').innerHTML = `${totalCostFuel.toLocaleString('vi-VN')} <span class="text-sm font-normal text-slate-400">VNĐ</span>`;
             document.getElementById('stat-total-liters').innerText = `${totalLiters.toFixed(1)} Lít nhiên liệu`;
             document.getElementById('stat-total-maint-cost').innerHTML = `${totalCostMaint.toLocaleString('vi-VN')} <span class="text-sm font-normal text-slate-400">VNĐ</span>`;
@@ -470,13 +520,11 @@
 
             lucide.createIcons();
 
-            // Cập nhật Biểu đồ 1: Tiêu thụ (L/100km)
             const validL100 = fuelsCalculated.filter(f => f.l100 !== null);
             chartCons.data.labels = validL100.map(f => formatDateVN(f.log_date));
             chartCons.data.datasets[0].data = validL100.map(f => f.l100.toFixed(1));
             chartCons.update();
 
-            // Cập nhật Biểu đồ 2: Lịch sử giá xăng (VNĐ/Lít)
             chartPrice.data.labels = fuelsCalculated.map(f => formatDateVN(f.log_date));
             chartPrice.data.datasets[0].data = fuelsCalculated.map(f => f.price_per_liter);
             chartPrice.update();
@@ -488,6 +536,7 @@
             document.getElementById('v-id').value = "";
             document.getElementById('v-name').value = "";
             document.getElementById('v-type').value = "Ô tô";
+            document.getElementById('v-tank').value = "";
             document.getElementById('v-odo').value = "";
             openModal('modal-vehicle');
         }
@@ -500,6 +549,7 @@
             document.getElementById('v-id').value = currentVehicle.id;
             document.getElementById('v-name').value = currentVehicle.name || currentVehicle.plate_number || '';
             document.getElementById('v-type').value = currentVehicle.vehicle_type || 'Ô tô';
+            document.getElementById('v-tank').value = (currentVehicle.tank_capacity || 0).toLocaleString('vi-VN');
             document.getElementById('v-odo').value = (currentVehicle.initial_odometer || 0).toLocaleString('vi-VN');
             openModal('modal-vehicle');
         }
@@ -513,6 +563,7 @@
                 name: vehicleName,
                 plate_number: vehicleName,
                 vehicle_type: document.getElementById('v-type').value,
+                tank_capacity: parseNumber(document.getElementById('v-tank').value),
                 initial_odometer: parseNumber(document.getElementById('v-odo').value)
             };
 
@@ -641,7 +692,6 @@
 
         // --- CHART INITIALIZATION ---
         function initCharts() {
-            // Biểu đồ 1: Tiêu thụ nhiên liệu
             chartCons = new Chart(document.getElementById('chart-consumption'), {
                 type: 'line',
                 data: {
@@ -658,7 +708,6 @@
                 options: { responsive: true, maintainAspectRatio: false }
             });
 
-            // Biểu đồ 2: Giá xăng theo thời gian
             chartPrice = new Chart(document.getElementById('chart-fuel-price'), {
                 type: 'line',
                 data: {
