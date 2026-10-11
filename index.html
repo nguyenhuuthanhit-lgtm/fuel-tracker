@@ -78,7 +78,7 @@
             </button>
         </div>
 
-        <!-- ================= PHẦN 2: BÁO CÁO & THỐNG KÊ (ĐÃ TÁCH LÊN TRÊN) ================= -->
+        <!-- ================= PHẦN 2: BÁO CÁO & THỐNG KÊ ================= -->
         <section class="space-y-6">
             <div class="border-b border-slate-700 pb-2 flex items-center gap-2">
                 <i data-lucide="bar-chart-3" class="w-5 h-5 text-cyan-400"></i>
@@ -136,20 +136,20 @@
                 </div>
             </div>
 
-            <!-- Charts -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                    <h3 class="font-bold mb-4 text-slate-200 flex items-center gap-2">
-                        <i data-lucide="line-chart" class="w-4 h-4 text-emerald-400"></i> Mức Tiêu Thụ Nhiên Liệu (L/100km)
+            <!-- Unified Chart Section with Tabs -->
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h3 class="font-bold text-slate-200 flex items-center gap-2">
+                        <i data-lucide="line-chart" class="w-5 h-5 text-emerald-400"></i> Biểu Đồ Phân Tích Chuyên Sâu
                     </h3>
-                    <div class="h-60"><canvas id="chart-consumption"></canvas></div>
+                    <!-- Chart Tabs -->
+                    <div class="flex bg-slate-900 p-1 rounded-lg border border-slate-700 text-xs font-medium">
+                        <button onclick="switchChartTab('l100')" id="tab-l100" class="px-3 py-1.5 rounded-md bg-emerald-600 text-white transition">L/100km</button>
+                        <button onclick="switchChartTab('price')" id="tab-price" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 transition">Giá Xăng</button>
+                        <button onclick="switchChartTab('costperkm')" id="tab-costperkm" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 transition">Đồng/km</button>
+                    </div>
                 </div>
-                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                    <h3 class="font-bold mb-4 text-slate-200 flex items-center gap-2">
-                        <i data-lucide="trending-up" class="w-4 h-4 text-cyan-400"></i> Lịch Sử Giá Xăng (VNĐ/Lít)
-                    </h3>
-                    <div class="h-60"><canvas id="chart-fuel-price"></canvas></div>
-                </div>
+                <div class="h-72"><canvas id="main-unified-chart"></canvas></div>
             </div>
         </section>
 
@@ -272,7 +272,7 @@
         </form>
     </div>
 
-    <!-- Modal Bảo Dưỡng (Đã bỏ thuế VAT) -->
+    <!-- Modal Bảo Dưỡng -->
     <div id="modal-maint" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-50">
         <form onsubmit="saveMaint(event)" class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 space-y-4">
             <h3 class="text-lg font-bold text-amber-400" id="maint-modal-title">Nhập Bảo Dưỡng</h3>
@@ -303,8 +303,8 @@
     <!-- Application Logic -->
     <script>
         // === CẤU HÌNH SUPABASE TRỰC TIẾP TẠI ĐÂY ===
-        const SUPABASE_URL = "https://dunvovhmtkkgmkjulasa.supabase.co"; // <--- Thay URL của bạn
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bnZvdmhtdGtrZ21ranVsYXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MjcwNTcsImV4cCI6MjEwNzAwMzA1N30.uW6IGzucuR-olvTTW9HLjhQLl_QiRE5MIpN0-QO0MJc"; // <--- Thay Key của bạn
+        const SUPABASE_URL = "https://dunvovhmtkkgmkjulasa.supabase.co"; // <--- DÒNG 270: Thay URL của bạn
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bnZvdmhtdGtrZ21ranVsYXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MjcwNTcsImV4cCI6MjEwNzAwMzA1N30.uW6IGzucuR-olvTTW9HLjhQLl_QiRE5MIpN0-QO0MJc"; // <--- DÒNG 271: Thay Key của bạn
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -313,11 +313,14 @@
         let fuelLogs = [];
         let maintLogs = [];
         let activeVehicleId = null;
-        let chartCons = null, chartPrice = null;
+        
+        let unifiedChart = null;
+        let currentChartTab = 'l100'; // Mặc định tab L/100km
+        let globalChartData = { labels: [], l100: [], price: [], costPerKm: [] };
 
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            initCharts();
+            initUnifiedChart();
             checkSession();
         });
 
@@ -438,7 +441,7 @@
             document.getElementById('pred-tank-size').innerText = `${tankCapacity.toLocaleString('vi-VN')} Lít`;
 
             const fuels = fuelLogs.filter(f => f.vehicle_id == activeVehicleId).sort((a, b) => new Date(a.log_date) - new Date(b.log_date));
-            const maints = maintLogs.filter(m => m.vehicle_id == activeVehicleId).sort((a, b) => new Date(b.log_date) - new Date(a.log_date));
+            const maints = maintLogs.filter(m => m.vehicle_id == activeVehicleId).sort((a, b) => new Date(a.log_date) - new Date(b.log_date));
 
             let totalCostFuel = 0, totalLiters = 0, sumL100 = 0, countL100 = 0;
             let fuelsCalculated = [];
@@ -449,15 +452,16 @@
                 totalLiters += liters;
 
                 let l100 = null;
+                let dist = 0;
                 if (i > 0) {
-                    const dist = fuels[i].odometer - fuels[i - 1].odometer;
+                    dist = fuels[i].odometer - fuels[i - 1].odometer;
                     if (dist > 0) {
                         l100 = (liters / dist) * 100;
                         sumL100 += l100;
                         countL100++;
                     }
                 }
-                fuelsCalculated.push({ ...fuels[i], liters, l100 });
+                fuelsCalculated.push({ ...fuels[i], liters, l100, dist });
             }
 
             let totalCostMaint = 0;
@@ -467,12 +471,54 @@
 
             const avgConsumption = countL100 > 0 ? (sumL100 / countL100) : 0;
 
-            // --- THUẬT TOÁN DỰ BÁO TIẾP THEO ---
+            // --- THUẬT TOÁN ĐỒNG/KM & DỰ BÁO ---
+            let chartLabels = [];
+            let chartL100 = [];
+            let chartPrice = [];
+            let chartCostPerKm = [];
+
+            let totalDistanceAll = 0;
+            if (fuels.length > 1) {
+                totalDistanceAll = fuels[fuels.length - 1].odometer - fuels[0].odometer;
+            }
+            const overallCostPerKm = totalDistanceAll > 0 ? (totalCostFuel + totalCostMaint) / totalDistanceAll : 0;
+
+            fuelsCalculated.forEach((f, idx) => {
+                chartLabels.push(formatDateVN(f.log_date));
+                if (f.l100 !== null) chartL100.push(f.l100.toFixed(1));
+                else chartL100.push(null);
+
+                chartPrice.push(f.price_per_liter);
+
+                // Tính đồng/km cho từng kỳ đổ xăng (chi phí xăng lần đó + bảo dưỡng phát sinh trong kỳ / khoảng cách)
+                let periodMaintCost = 0;
+                if (idx > 0) {
+                    const prevOdo = fuelsCalculated[idx - 1].odometer;
+                    const currOdo = f.odometer;
+                    maints.forEach(m => {
+                        if (m.odometer > prevOdo && m.odometer <= currOdo) {
+                            periodMaintCost += parseFloat(m.service_cost) || 0;
+                        }
+                    });
+                }
+                const periodDist = f.dist;
+                let cpKm = periodDist > 0 ? (parseFloat(f.total_cost) + periodMaintCost) / periodDist : 0;
+                chartCostPerKm.push(Math.round(cpKm));
+            });
+
+            globalChartData = {
+                labels: chartLabels,
+                l100: chartL100,
+                price: chartPrice,
+                costPerKm: chartCostPerKm
+            };
+
+            updateUnifiedChartDisplay();
+
             if (fuels.length > 0 && avgConsumption > 0 && tankCapacity > 0) {
                 const lastFuel = fuels[fuels.length - 1];
-                const lastOdometer = parseFloat(lastFuel.odometer);
                 const maxRangeKm = (tankCapacity / avgConsumption) * 100;
-                const recommendedNextOdometer = lastOdometer + Math.round(maxRangeKm * 0.85);
+                const recommendedNextOdometer = parseFloat(lastFuel.odometer) + Math.round(maxRangeKm * 0.85);
                 const estimatedRemainingLiters = tankCapacity * 0.15;
                 const litersNeededToFill = Math.max(0, tankCapacity - estimatedRemainingLiters);
 
@@ -505,7 +551,7 @@
                 </tr>
             `).join('');
 
-            // Bảng Bảo Dưỡng (Không tính VAT)
+            // Bảng Bảo Dưỡng
             document.getElementById('tbl-maint').innerHTML = maints.map(m => {
                 const cost = parseFloat(m.service_cost) || 0;
                 return `
@@ -522,15 +568,68 @@
             }).join('');
 
             lucide.createIcons();
+        }
 
-            const validL100 = fuelsCalculated.filter(f => f.l100 !== null);
-            chartCons.data.labels = validL100.map(f => formatDateVN(f.log_date));
-            chartCons.data.datasets[0].data = validL100.map(f => f.l100.toFixed(1));
-            chartCons.update();
+        // --- TABBED CHART LOGIC ---
+        function switchChartTab(tab) {
+            currentChartTab = tab;
+            document.getElementById('tab-l100').className = tab === 'l100' ? 'px-3 py-1.5 rounded-md bg-emerald-600 text-white transition' : 'px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 transition';
+            document.getElementById('tab-price').className = tab === 'price' ? 'px-3 py-1.5 rounded-md bg-cyan-600 text-white transition' : 'px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 transition';
+            document.getElementById('tab-costperkm').className = tab === 'costperkm' ? 'px-3 py-1.5 rounded-md bg-amber-600 text-white transition' : 'px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 transition';
+            updateUnifiedChartDisplay();
+        }
 
-            chartPrice.data.labels = fuelsCalculated.map(f => formatDateVN(f.log_date));
-            chartPrice.data.datasets[0].data = fuelsCalculated.map(f => f.price_per_liter);
-            chartPrice.update();
+        function initUnifiedChart() {
+            unifiedChart = new Chart(document.getElementById('main-unified-chart'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'L/100km',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function updateUnifiedChartDisplay() {
+            if (!unifiedChart) return;
+            unifiedChart.data.labels = globalChartData.labels;
+
+            if (currentChartTab === 'l100') {
+                unifiedChart.data.datasets[0] = {
+                    label: 'Mức tiêu thụ (L/100km)',
+                    data: globalChartData.l100,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                };
+            } else if (currentChartTab === 'price') {
+                unifiedChart.data.datasets[0] = {
+                    label: 'Giá Xăng (VNĐ/Lít)',
+                    data: globalChartData.price,
+                    borderColor: '#06b6d4',
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                };
+            } else if (currentChartTab === 'costperkm') {
+                unifiedChart.data.datasets[0] = {
+                    label: 'Chi phí tổng hợp (Đồng/km)',
+                    data: globalChartData.costPerKm,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                };
+            }
+            unifiedChart.update();
         }
 
         // --- MANAGE VEHICLES ---
@@ -636,7 +735,7 @@
             }
         }
 
-        // --- MANAGE MAINTENANCE LOGS (BỎ VAT) ---
+        // --- MANAGE MAINTENANCE LOGS ---
         function openMaintModal(data = null) {
             if (data) {
                 document.getElementById('maint-modal-title').innerText = "Cập Nhật Bảo Dưỡng";
@@ -688,41 +787,6 @@
                 closeModal('modal-maint');
                 fetchData();
             }
-        }
-
-        // --- CHART INITIALIZATION ---
-        function initCharts() {
-            chartCons = new Chart(document.getElementById('chart-consumption'), {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'L/100km',
-                        data: [],
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-
-            chartPrice = new Chart(document.getElementById('chart-fuel-price'), {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Giá xăng (VNĐ/Lít)',
-                        data: [],
-                        borderColor: '#06b6d4',
-                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
         }
 
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
