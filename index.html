@@ -56,9 +56,9 @@
     </div>
 
     <!-- Main Dashboard -->
-    <main id="app-dashboard" class="hidden max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <main id="app-dashboard" class="hidden max-w-7xl mx-auto px-4 py-6 space-y-8">
 
-        <!-- Vehicle Bar -->
+        <!-- Vehicle Selection Bar -->
         <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3">
                 <i data-lucide="car" class="w-6 h-6 text-emerald-400"></i>
@@ -78,124 +78,138 @@
             </button>
         </div>
 
-        <!-- Dashboard Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                <div class="flex justify-between text-slate-400 mb-2">
-                    <span class="text-sm font-medium">Định mức L/100km</span>
-                    <i data-lucide="fuel" class="w-5 h-5 text-emerald-400"></i>
-                </div>
-                <div class="text-3xl font-bold text-emerald-400" id="stat-avg-consumption">0.0 <span class="text-sm font-normal text-slate-400">L/100km</span></div>
-                <p class="text-xs text-slate-400 mt-2">Tính từ dữ liệu đổ xăng</p>
+        <!-- ================= PHẦN 2: BÁO CÁO & THỐNG KÊ (ĐÃ TÁCH LÊN TRÊN) ================= -->
+        <section class="space-y-6">
+            <div class="border-b border-slate-700 pb-2 flex items-center gap-2">
+                <i data-lucide="bar-chart-3" class="w-5 h-5 text-cyan-400"></i>
+                <h2 class="text-lg font-bold text-cyan-400">Báo Cáo & Thống Kê Tổng Quan</h2>
             </div>
 
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                <div class="flex justify-between text-slate-400 mb-2">
-                    <span class="text-sm font-medium">Tổng tiền xăng</span>
-                    <i data-lucide="droplet" class="w-5 h-5 text-cyan-400"></i>
+            <!-- Dashboard Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                    <div class="flex justify-between text-slate-400 mb-2">
+                        <span class="text-sm font-medium">Định mức L/100km</span>
+                        <i data-lucide="fuel" class="w-5 h-5 text-emerald-400"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-emerald-400" id="stat-avg-consumption">0.0 <span class="text-sm font-normal text-slate-400">L/100km</span></div>
+                    <p class="text-xs text-slate-400 mt-2">Tính từ dữ liệu đổ xăng</p>
                 </div>
-                <div class="text-3xl font-bold text-cyan-400" id="stat-total-fuel-cost">0 <span class="text-sm font-normal text-slate-400">VNĐ</span></div>
-                <p class="text-xs text-slate-400 mt-2" id="stat-total-liters">0 Lít nhiên liệu</p>
+
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                    <div class="flex justify-between text-slate-400 mb-2">
+                        <span class="text-sm font-medium">Tổng tiền xăng</span>
+                        <i data-lucide="droplet" class="w-5 h-5 text-cyan-400"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-cyan-400" id="stat-total-fuel-cost">0 <span class="text-sm font-normal text-slate-400">VNĐ</span></div>
+                    <p class="text-xs text-slate-400 mt-2" id="stat-total-liters">0 Lít nhiên liệu</p>
+                </div>
+
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                    <div class="flex justify-between text-slate-400 mb-2">
+                        <span class="text-sm font-medium">Tổng tiền bảo dưỡng</span>
+                        <i data-lucide="wrench" class="w-5 h-5 text-amber-400"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-amber-400" id="stat-total-maint-cost">0 <span class="text-sm font-normal text-slate-400">VNĐ</span></div>
+                    <p class="text-xs text-slate-400 mt-2" id="stat-maint-count">0 Lần bảo dưỡng</p>
+                </div>
             </div>
 
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                <div class="flex justify-between text-slate-400 mb-2">
-                    <span class="text-sm font-medium">Tổng tiền bảo dưỡng</span>
-                    <i data-lucide="wrench" class="w-5 h-5 text-amber-400"></i>
-                </div>
-                <div class="text-3xl font-bold text-amber-400" id="stat-total-maint-cost">0 <span class="text-sm font-normal text-slate-400">VNĐ</span></div>
-                <p class="text-xs text-slate-400 mt-2" id="stat-maint-count">0 Lần bảo dưỡng</p>
-            </div>
-        </div>
-
-        <!-- Fuel Prediction Algorithm Widget -->
-        <div class="bg-gradient-to-r from-emerald-900/40 to-cyan-900/40 border border-emerald-500/30 rounded-xl p-5 shadow-lg">
-            <h3 class="font-bold text-emerald-400 mb-3 flex items-center gap-2">
-                <i data-lucide="compass" class="w-5 h-5"></i> Dự Báo & Nhắc Nhở Đổ Xăng (Thuật toán thông minh)
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm" id="fuel-prediction-box">
-                <div class="bg-slate-800/80 p-3.5 rounded-lg border border-slate-700">
-                    <span class="text-xs text-slate-400 block">Dung tích bình xăng</span>
-                    <span class="text-lg font-bold text-slate-100" id="pred-tank-size">0 Lít</span>
-                </div>
-                <div class="bg-slate-800/80 p-3.5 rounded-lg border border-slate-700">
-                    <span class="text-xs text-slate-400 block">Km tiếp theo nên đổ xăng</span>
-                    <span class="text-lg font-bold text-emerald-400" id="pred-next-km">Đang tính...</span>
-                </div>
-                <div class="bg-slate-800/80 p-3.5 rounded-lg border border-slate-700">
-                    <span class="text-xs text-slate-400 block">Số Lít dự kiến cần đổ (Đầy bình)</span>
-                    <span class="text-lg font-bold text-cyan-400" id="pred-liters-needed">Đang tính...</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Charts -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                <h3 class="font-bold mb-4 text-slate-200 flex items-center gap-2">
-                    <i data-lucide="line-chart" class="w-4 h-4 text-emerald-400"></i> Mức Tiêu Thụ Nhiên Liệu (L/100km)
+            <!-- Fuel Prediction Algorithm Widget -->
+            <div class="bg-gradient-to-r from-emerald-900/40 to-cyan-900/40 border border-emerald-500/30 rounded-xl p-5 shadow-lg">
+                <h3 class="font-bold text-emerald-400 mb-3 flex items-center gap-2">
+                    <i data-lucide="compass" class="w-5 h-5"></i> Dự Báo & Nhắc Nhở Đổ Xăng (Thuật toán thông minh)
                 </h3>
-                <div class="h-60"><canvas id="chart-consumption"></canvas></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm" id="fuel-prediction-box">
+                    <div class="bg-slate-800/80 p-3.5 rounded-lg border border-slate-700">
+                        <span class="text-xs text-slate-400 block">Dung tích bình xăng</span>
+                        <span class="text-lg font-bold text-slate-100" id="pred-tank-size">0 Lít</span>
+                    </div>
+                    <div class="bg-slate-800/80 p-3.5 rounded-lg border border-slate-700">
+                        <span class="text-xs text-slate-400 block">Km tiếp theo nên đổ xăng</span>
+                        <span class="text-lg font-bold text-emerald-400" id="pred-next-km">Đang tính...</span>
+                    </div>
+                    <div class="bg-slate-800/80 p-3.5 rounded-lg border border-slate-700">
+                        <span class="text-xs text-slate-400 block">Số Lít dự kiến cần đổ (Đầy bình)</span>
+                        <span class="text-lg font-bold text-cyan-400" id="pred-liters-needed">Đang tính...</span>
+                    </div>
+                </div>
             </div>
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                <h3 class="font-bold mb-4 text-slate-200 flex items-center gap-2">
-                    <i data-lucide="trending-up" class="w-4 h-4 text-cyan-400"></i> Lịch Sử Giá Xăng (VNĐ/Lít)
-                </h3>
-                <div class="h-60"><canvas id="chart-fuel-price"></canvas></div>
-            </div>
-        </div>
 
-        <!-- Fuel Table -->
-        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="font-bold text-lg text-slate-200 flex items-center gap-2">
-                    <i data-lucide="fuel" class="w-5 h-5 text-emerald-400"></i> Nhật ký Đổ Xăng
-                </h2>
-                <button onclick="openFuelModal()" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg text-sm font-medium transition">+ Nhập Xăng</button>
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                    <h3 class="font-bold mb-4 text-slate-200 flex items-center gap-2">
+                        <i data-lucide="line-chart" class="w-4 h-4 text-emerald-400"></i> Mức Tiêu Thụ Nhiên Liệu (L/100km)
+                    </h3>
+                    <div class="h-60"><canvas id="chart-consumption"></canvas></div>
+                </div>
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                    <h3 class="font-bold mb-4 text-slate-200 flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-cyan-400"></i> Lịch Sử Giá Xăng (VNĐ/Lít)
+                    </h3>
+                    <div class="h-60"><canvas id="chart-fuel-price"></canvas></div>
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-900 text-slate-400 text-xs uppercase">
-                        <tr>
-                            <th class="p-3">Ngày</th>
-                            <th class="p-3">Số Km</th>
-                            <th class="p-3">Số tiền (VNĐ)</th>
-                            <th class="p-3">Giá/Lít (VNĐ)</th>
-                            <th class="p-3">Số Lít</th>
-                            <th class="p-3 text-emerald-400">L/100km</th>
-                            <th class="p-3 text-center">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbl-fuel" class="divide-y divide-slate-700/50"></tbody>
-                </table>
-            </div>
-        </div>
+        </section>
 
-        <!-- Maintenance Table -->
-        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="font-bold text-lg text-slate-200 flex items-center gap-2">
-                    <i data-lucide="wrench" class="w-5 h-5 text-amber-400"></i> Nhật ký Bảo Dưỡng
-                </h2>
-                <button onclick="openMaintModal()" class="bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded-lg text-sm font-medium transition">+ Thêm Bảo Dưỡng</button>
+        <!-- ================= PHẦN 1: NHẬP LIỆU & QUẢN LÝ NHẬT KÝ ================= -->
+        <section class="space-y-6 pt-4">
+            <div class="border-b border-slate-700 pb-2 flex items-center gap-2">
+                <i data-lucide="clipboard-edit" class="w-5 h-5 text-emerald-400"></i>
+                <h2 class="text-lg font-bold text-emerald-400">Nhập Liệu & Nhật Ký Hoạt Động</h2>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-900 text-slate-400 text-xs uppercase">
-                        <tr>
-                            <th class="p-3">Ngày</th>
-                            <th class="p-3">Số Km</th>
-                            <th class="p-3">Nội dung</th>
-                            <th class="p-3">Chi phí (VNĐ)</th>
-                            <th class="p-3">VAT</th>
-                            <th class="p-3 text-amber-400">Tổng tiền (+VAT)</th>
-                            <th class="p-3 text-center">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbl-maint" class="divide-y divide-slate-700/50"></tbody>
-                </table>
+
+            <!-- Fuel Table & Action -->
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-200 flex items-center gap-2">
+                        <i data-lucide="fuel" class="w-5 h-5 text-emerald-400"></i> Nhật ký Đổ Xăng
+                    </h3>
+                    <button onclick="openFuelModal()" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg text-sm font-medium transition">+ Nhập Xăng</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-900 text-slate-400 text-xs uppercase">
+                            <tr>
+                                <th class="p-3">Ngày</th>
+                                <th class="p-3">Số Km</th>
+                                <th class="p-3">Số tiền (VNĐ)</th>
+                                <th class="p-3">Giá/Lít (VNĐ)</th>
+                                <th class="p-3">Số Lít</th>
+                                <th class="p-3 text-emerald-400">L/100km</th>
+                                <th class="p-3 text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbl-fuel" class="divide-y divide-slate-700/50"></tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+
+            <!-- Maintenance Table & Action -->
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-200 flex items-center gap-2">
+                        <i data-lucide="wrench" class="w-5 h-5 text-amber-400"></i> Nhật ký Bảo Dưỡng
+                    </h3>
+                    <button onclick="openMaintModal()" class="bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded-lg text-sm font-medium transition">+ Thêm Bảo Dưỡng</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-900 text-slate-400 text-xs uppercase">
+                            <tr>
+                                <th class="p-3">Ngày</th>
+                                <th class="p-3">Số Km</th>
+                                <th class="p-3">Nội dung</th>
+                                <th class="p-3 text-amber-400">Chi phí (VNĐ)</th>
+                                <th class="p-3 text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbl-maint" class="divide-y divide-slate-700/50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
 
     </main>
 
@@ -258,7 +272,7 @@
         </form>
     </div>
 
-    <!-- Modal Bảo Dưỡng -->
+    <!-- Modal Bảo Dưỡng (Đã bỏ thuế VAT) -->
     <div id="modal-maint" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-50">
         <form onsubmit="saveMaint(event)" class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 space-y-4">
             <h3 class="text-lg font-bold text-amber-400" id="maint-modal-title">Nhập Bảo Dưỡng</h3>
@@ -278,10 +292,6 @@
             <div>
                 <label class="text-xs text-slate-400 block mb-1">Chi phí dịch vụ (VNĐ)</label>
                 <input type="text" id="m-cost" placeholder="Ví dụ: 1,200,000" oninput="formatNumberInput(this)" required class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400">
-            </div>
-            <div>
-                <label class="text-xs text-slate-400 block mb-1">Thuế VAT (%)</label>
-                <input type="text" id="m-vat" placeholder="10" value="10" oninput="formatNumberInput(this)" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:outline-none focus:border-amber-400">
             </div>
             <div class="flex justify-end gap-2 pt-2">
                 <button type="button" onclick="closeModal('modal-maint')" class="px-4 py-2 bg-slate-700 rounded text-sm">Hủy</button>
@@ -452,22 +462,17 @@
 
             let totalCostMaint = 0;
             maints.forEach(m => {
-                totalCostMaint += parseFloat(m.service_cost) * (1 + (parseFloat(m.vat_percent) || 0) / 100);
+                totalCostMaint += parseFloat(m.service_cost) || 0;
             });
 
             const avgConsumption = countL100 > 0 ? (sumL100 / countL100) : 0;
 
             // --- THUẬT TOÁN DỰ BÁO TIẾP THEO ---
             if (fuels.length > 0 && avgConsumption > 0 && tankCapacity > 0) {
-                const lastFuel = fuels[fuels.length - 1]; // Lần đổ gần nhất
+                const lastFuel = fuels[fuels.length - 1];
                 const lastOdometer = parseFloat(lastFuel.odometer);
-                const lastLitersFilled = lastFuel.total_cost / lastFuel.price_per_liter;
-
-                // 1. Số Km tối đa đi được với bình xăng đầy
                 const maxRangeKm = (tankCapacity / avgConsumption) * 100;
-                // 2. Km tiếp theo nên đổ (Dự kiến đổ khi bình còn khoảng 10% - 15% hoặc mức an toàn)
                 const recommendedNextOdometer = lastOdometer + Math.round(maxRangeKm * 0.85);
-                // 3. Số lít cần đổ ước tính (Giả sử hiện tại bình còn 15% dung tích)
                 const estimatedRemainingLiters = tankCapacity * 0.15;
                 const litersNeededToFill = Math.max(0, tankCapacity - estimatedRemainingLiters);
 
@@ -500,17 +505,15 @@
                 </tr>
             `).join('');
 
-            // Bảng Bảo Dưỡng
+            // Bảng Bảo Dưỡng (Không tính VAT)
             document.getElementById('tbl-maint').innerHTML = maints.map(m => {
-                const total = parseFloat(m.service_cost) * (1 + (parseFloat(m.vat_percent) || 0) / 100);
+                const cost = parseFloat(m.service_cost) || 0;
                 return `
                 <tr class="hover:bg-slate-700/30">
                     <td class="p-3">${formatDateVN(m.log_date)}</td>
                     <td class="p-3 font-semibold">${Number(m.odometer).toLocaleString('vi-VN')} km</td>
                     <td class="p-3">${m.description}</td>
-                    <td class="p-3">${Number(m.service_cost).toLocaleString('vi-VN')}</td>
-                    <td class="p-3">${m.vat_percent || 0}%</td>
-                    <td class="p-3 font-bold text-amber-400">${total.toLocaleString('vi-VN')} VNĐ</td>
+                    <td class="p-3 font-bold text-amber-400">${cost.toLocaleString('vi-VN')} VNĐ</td>
                     <td class="p-3 text-center">
                         <button onclick="editMaint('${m.id}')" class="text-slate-400 hover:text-amber-400 p-1 mr-1" title="Sửa"><i data-lucide="pencil" class="w-4 h-4"></i></button>
                         <button onclick="deleteMaint('${m.id}')" class="text-slate-400 hover:text-red-400 p-1" title="Xóa"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
@@ -633,7 +636,7 @@
             }
         }
 
-        // --- MANAGE MAINTENANCE LOGS ---
+        // --- MANAGE MAINTENANCE LOGS (BỎ VAT) ---
         function openMaintModal(data = null) {
             if (data) {
                 document.getElementById('maint-modal-title').innerText = "Cập Nhật Bảo Dưỡng";
@@ -642,7 +645,6 @@
                 document.getElementById('m-km').value = data.odometer.toLocaleString('vi-VN');
                 document.getElementById('m-desc').value = data.description;
                 document.getElementById('m-cost').value = data.service_cost.toLocaleString('vi-VN');
-                document.getElementById('m-vat').value = data.vat_percent || 0;
             } else {
                 document.getElementById('maint-modal-title').innerText = "Nhập Bảo Dưỡng";
                 document.getElementById('m-id').value = "";
@@ -650,7 +652,6 @@
                 document.getElementById('m-km').value = "";
                 document.getElementById('m-desc').value = "";
                 document.getElementById('m-cost').value = "";
-                document.getElementById('m-vat').value = 10;
             }
             openModal('modal-maint');
         }
@@ -677,8 +678,7 @@
                 log_date: document.getElementById('m-date').value,
                 odometer: parseNumber(document.getElementById('m-km').value),
                 description: document.getElementById('m-desc').value,
-                service_cost: parseNumber(document.getElementById('m-cost').value),
-                vat_percent: parseNumber(document.getElementById('m-vat').value)
+                service_cost: parseNumber(document.getElementById('m-cost').value)
             };
 
             let res = id ? await supabaseClient.from('maintenance_logs').update(payload).eq('id', id) : await supabaseClient.from('maintenance_logs').insert([payload]);
